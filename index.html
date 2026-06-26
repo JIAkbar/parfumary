@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Parfumary — Kalkulator Racik</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f0ebe0;
+      --surface:   #f6f2ea;
+      --white:     #fdfaf4;
+      --border:    rgba(28, 20, 8, 0.09);
+      --border-md: rgba(28, 20, 8, 0.16);
+      --border-lg: rgba(28, 20, 8, 0.24);
+      --ink:       #16120a;
+      --ink-2:     #2c2418;
+      --ink-3:     #4a4238;
+      --ink-4:     #6e6560;
+      --ink-5:     #9a938c;
+      --c-bibit:   #a07828;
+      --c-boost:   #7a5070;
+      --c-pelarut: #2e7060;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Subtle paper texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.018'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      padding: 54px 0 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      animation: rise 0.65s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    .brand-name {
+      font-family: 'Cormorant', serif;
+      font-weight: 300;
+      font-size: 40px;
+      color: var(--ink);
+      letter-spacing: 0.06em;
+      line-height: 1;
+      display: block;
+    }
+
+    .brand-sub {
+      font-size: 9px;
+      letter-spacing: 0.40em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      font-weight: 400;
+      margin-top: 7px;
+      display: block;
+    }
+
+    /* 3×3 dot ornament — encodes formula ratio */
+    .dot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 7px);
+      gap: 5px;
+      padding-top: 6px;
+    }
+
+    /* ─── Section wrapper ─── */
+    .sec {
+      margin-bottom: 26px;
+    }
+
+    .sec-label {
+      font-size: 9px;
+      letter-spacing: 0.36em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .sec-label::after {
+      content: '';
+      flex: 1;
+      height: 0.5px;
+      background: var(--border-md);
+    }
+
+    /* Stagger animations */
+    .a  { animation: rise 0.6s cubic-bezier(0.22,1,0.36,1) both; }
+    .d1 { animation-delay: 0.06s; }
+    .d2 { animation-delay: 0.12s; }
+    .d3 { animation-delay: 0.18s; }
+    .d4 { animation-delay: 0.24s; }
+    .d5 { animation-delay: 0.30s; }
+    .d6 { animation-delay: 0.36s; }
+    .d7 { animation-delay: 0.42s; }
+
+    /* ─── Pill size buttons ─── */
+    .pill-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .pill {
+      background: transparent;
+      border: 0.5px solid var(--border-md);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 300;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.02em;
+    }
+
+    .pill:hover:not(.active) {
+      border-color: var(--ink-3);
+      color: var(--ink-2);
+    }
+
+    .pill.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--white);
+      letter-spacing: 0.02em;
+    }
+
+    .pill:active { transform: scale(0.95); }
+
+    /* Custom size input */
+    .input-wrap {
+      display: flex;
+      align-items: center;
+      border: 0.5px solid var(--border-md);
+      border-radius: 8px;
+      background: var(--white);
+      transition: border-color 0.2s;
+      overflow: hidden;
+    }
+
+    .input-wrap:focus-within { border-color: var(--ink-3); }
+
+    .vol-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 12px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--ink);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .vol-input::-webkit-inner-spin-button,
+    .vol-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .vol-input::placeholder { color: var(--ink-5); }
+
+    .vol-unit {
+      padding: 12px 14px 12px 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      color: var(--ink-4);
+      letter-spacing: 0.06em;
+      user-select: none;
+    }
+
+    /* ─── Quality toggle ─── */
+    .q-toggle {
+      display: flex;
+      border: 0.5px solid var(--border-md);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--white);
+    }
+
+    .q-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 16px 12px 13px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.22s ease;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .q-btn:first-child::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 18%; bottom: 18%;
+      width: 0.5px;
+      background: var(--border-md);
+    }
+
+    .q-btn.active { background: var(--ink); }
+
+    .q-name {
+      display: block;
+      font-family: 'Cormorant', serif;
+      font-size: 21px;
+      font-weight: 300;
+      color: var(--ink-3);
+      transition: color 0.22s;
+      line-height: 1.1;
+    }
+
+    .q-btn.active .q-name { color: var(--white); }
+
+    .q-range {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px;
+      color: var(--ink-5);
+      margin-top: 5px;
+      letter-spacing: 0.04em;
+      transition: color 0.22s;
+    }
+
+    .q-btn.active .q-range { color: rgba(255,255,255,0.28); }
+
+    /* ─── Slider card ─── */
+    .slider-card {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px 15px;
+    }
+
+    .sl-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+    }
+
+    .sl-label {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--ink-2);
+      letter-spacing: 0.04em;
+    }
+
+    .sl-label sub {
+      font-size: 9px;
+      color: var(--ink-4);
+      font-weight: 300;
+      vertical-align: baseline;
+      margin-left: 3px;
+    }
+
+    .sl-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--ink);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .sl-val em {
+      font-style: normal;
+      font-size: 13px;
+      color: var(--ink-3);
+      letter-spacing: 0;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 1.5px;
+      border-radius: 1px;
+      outline: none;
+      cursor: pointer;
+      background: linear-gradient(
+        to right,
+        var(--ink) var(--fill, 0%),
+        var(--border-md) var(--fill, 0%)
+      );
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2.5px solid var(--bg);
+      box-shadow: 0 1px 5px rgba(0,0,0,0.14);
+      cursor: grab;
+      transition: transform 0.15s;
+    }
+
+    input[type="range"]:active::-webkit-slider-thumb {
+      transform: scale(1.18);
+      cursor: grabbing;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: 2.5px solid var(--bg);
+    }
+
+    .sl-hint {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--ink-5);
+      text-align: right;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      height: 0.5px;
+      background: var(--border-md);
+      margin: 6px 0 28px;
+    }
+
+    /* ─── Result card ─── */
+    .result-card {
+      background: var(--white);
+      border: 0.5px solid var(--border-md);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .result-head {
+      padding: 18px 20px 14px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .result-title {
+      font-size: 9px;
+      letter-spacing: 0.40em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      font-weight: 400;
+    }
+
+    .result-vol-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+    }
+
+    /* Thin progress bar */
+    .prog-bar {
+      height: 2px;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .pb { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .pb-b  { background: var(--c-bibit); }
+    .pb-bs { background: var(--c-boost); }
+    .pb-p  { background: var(--c-pelarut); }
+
+    /* Formula rows */
+    .f-rows { padding: 0; }
+
+    .f-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 17px 20px;
+      border-bottom: 0.5px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .f-row:last-child { border-bottom: none; }
+
+    .f-mark {
+      width: 2px;
+      height: 32px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    .f-info { flex: 1; min-width: 0; }
+
+    .f-name {
+      font-size: 12.5px;
+      font-weight: 400;
+      color: var(--ink-2);
+      letter-spacing: 0.03em;
+    }
+
+    .f-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--ink-5);
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .f-val { text-align: right; flex-shrink: 0; }
+
+    .f-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--ink);
+      letter-spacing: -0.045em;
+      line-height: 1;
+    }
+
+    .f-unit {
+      font-size: 11px;
+      color: var(--ink-4);
+      letter-spacing: 0;
+    }
+
+    .f-drops {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-4);
+      margin-top: 4px;
+    }
+
+    .f-warn {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: #906030;
+      margin-top: 3px;
+    }
+
+    /* Legend row */
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 12px 20px 13px;
+      border-top: 0.5px solid var(--border);
+      background: var(--surface);
+    }
+
+    .leg {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--ink-4);
+      letter-spacing: 0.04em;
+    }
+
+    .leg-mark {
+      width: 16px;
+      height: 2px;
+      border-radius: 1px;
+    }
+
+    /* ─── Tip ─── */
+    .tip {
+      font-size: 11.5px;
+      color: var(--ink-3);
+      line-height: 1.7;
+      margin-top: 14px;
+      padding: 14px 16px;
+      border: 0.5px solid var(--border-md);
+      border-radius: 8px;
+      background: var(--white);
+    }
+
+    .tip strong { color: var(--ink-2); font-weight: 400; }
+
+    /* ─── Preset cards ─── */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .preset-card {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 15px 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .preset-card:hover { border-color: var(--border-lg); }
+    .preset-card:active { transform: scale(0.97); }
+
+    .p-name {
+      display: block;
+      font-family: 'Cormorant', serif;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .p-desc {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px;
+      color: var(--ink-4);
+      margin-top: 5px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── Brand guide ─── */
+    .brand-toggle-btn {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: var(--ink-4);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 0 0;
+      margin-top: -14px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.15s;
+    }
+    .brand-toggle-btn:hover { color: var(--ink-2); }
+
+    .brand-guide {
+      display: none;
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-top: -16px;
+      margin-bottom: 26px;
+      animation: rise 0.22s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .brand-guide.open { display: block; }
+
+    .brand-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .brand-col-title {
+      font-size: 9px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      margin-bottom: 9px;
+      font-weight: 400;
+    }
+
+    .brand-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .brand-item {
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      color: var(--ink-2);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      line-height: 1.3;
+    }
+
+    .brand-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .brand-dot.p { background: var(--c-bibit); }
+    .brand-dot.m { background: var(--ink-4); }
+
+    .brand-origin {
+      font-size: 9px;
+      color: var(--ink-5);
+      margin-left: 2px;
+    }
+
+    .brand-note {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--ink-4);
+      margin-top: 12px;
+      padding-top: 11px;
+      border-top: 0.5px solid var(--border);
+      line-height: 1.65;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      text-align: center;
+      padding: 40px 0 0;
+      font-size: 9px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ink-5);
+    }
+
+    /* ─── Keyframes ─── */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes flash {
+      0%   { opacity: 0.35; }
+      100% { opacity: 1; }
+    }
+
+    .flash {
+      animation: flash 0.16s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- ── Header ── -->
+    <header class="header">
+      <div>
+        <span class="brand-name">Parfumary</span>
+        <span class="brand-sub">Kalkulator Racik Parfum</span>
+      </div>
+      <!-- 3×3 dots — opacity gradient encodes bibit→pelarut -->
+      <div class="dot-grid" aria-hidden="true">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-bibit);opacity:.9"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-bibit);opacity:.45"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-bibit);opacity:.15"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-boost);opacity:.55"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-boost);opacity:.25"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--border-md);opacity:.6"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-pelarut);opacity:.3"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-pelarut);opacity:.6"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--c-pelarut);opacity:.9"></div>
+      </div>
+    </header>
+
+    <!-- ── 1. Bottle size ── -->
+    <div class="sec a d1">
+      <div class="sec-label">Kapasitas Botol</div>
+      <div class="pill-row">
+        <button class="pill" onclick="pickSize(10,this)">10 ml</button>
+        <button class="pill" onclick="pickSize(20,this)">20 ml</button>
+        <button class="pill active" onclick="pickSize(30,this)">30 ml</button>
+        <button class="pill" onclick="pickSize(50,this)">50 ml</button>
+        <button class="pill" onclick="pickSize(100,this)">100 ml</button>
+      </div>
+      <div class="input-wrap">
+        <input type="number" class="vol-input" id="customVol"
+          placeholder="Ukuran lain…" min="1" max="2000"
+          oninput="customSize(this.value)">
+        <span class="vol-unit">ml</span>
+      </div>
+    </div>
+
+    <!-- ── 2. Quality ── -->
+    <div class="sec a d2">
+      <div class="sec-label">Kualitas Bibit</div>
+      <div class="q-toggle">
+        <button class="q-btn active" id="qPremium" onclick="setQuality('premium')">
+          <span class="q-name">Premium</span>
+          <span class="q-range">25 – 35%</span>
+        </button>
+        <button class="q-btn" id="qMedium" onclick="setQuality('medium')">
+          <span class="q-name">Medium</span>
+          <span class="q-range">40 – 47%</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Brand guide (collapsible) ── -->
+    <button class="brand-toggle-btn" onclick="toggleBrandGuide()" id="brandToggleBtn">
+      <span id="brandArrow">▸</span> Panduan merk bibit
+    </button>
+    <div class="brand-guide" id="brandGuide">
+      <div class="brand-cols">
+        <div>
+          <div class="brand-col-title">Premium · 25–35%</div>
+          <div class="brand-list">
+            <span class="brand-item"><span class="brand-dot p"></span>Luzi <span class="brand-origin">🇨🇭 Swiss</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Mane <span class="brand-origin">🇫🇷 Prancis</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Charabot <span class="brand-origin">🇫🇷 Prancis</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Iberchem <span class="brand-origin">🇪🇸 Spanyol</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Parfex <span class="brand-origin">🇨🇭 Swiss</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Givaudan <span class="brand-origin">🇨🇭 Swiss</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Symrise <span class="brand-origin">🇩🇪 Jerman</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Firmenich <span class="brand-origin">🇨🇭 Swiss</span></span>
+            <span class="brand-item"><span class="brand-dot p"></span>Argeville <span class="brand-origin">🇫🇷 Prancis</span></span>
+          </div>
+        </div>
+        <div>
+          <div class="brand-col-title">Medium · 40–47%</div>
+          <div class="brand-list">
+            <span class="brand-item"><span class="brand-dot m"></span>Parfarome <span class="brand-origin">🇮🇩 Lokal</span></span>
+            <span class="brand-item"><span class="brand-dot m"></span>Expression Parfum <span class="brand-origin">🇮🇩 Lokal</span></span>
+            <span class="brand-item"><span class="brand-dot m"></span>Macbrame <span class="brand-origin">🇮🇩 Lokal</span></span>
+            <span class="brand-item"><span class="brand-dot m"></span>Florentine <span class="brand-origin">🇮🇩 Lokal</span></span>
+            <span class="brand-item"><span class="brand-dot m"></span>X-Ultimate <span class="brand-origin">🇮🇩 Lokal</span></span>
+            <span class="brand-item"><span class="brand-dot m"></span>Al Tahaani <span class="brand-origin">🇮🇩 Lokal</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="brand-note">
+        Kunci: merk Eropa/Swiss → Premium. Produk lokal Indonesia → Medium.<br>
+        Tidak yakin? Cek label kemasan — ada nama negara asal atau distributor resmi.
+      </div>
+    </div>
+
+    <!-- ── 3. Preset Konsentrasi ── -->
+    <div class="sec a d3">
+      <div class="sec-label">Preset Konsentrasi</div>
+      <div class="preset-grid">
+        <button class="preset-card" onclick="applyPreset('cologne')">
+          <span class="p-name">Cologne</span>
+          <span class="p-desc" id="pdCologne">~8% · ringan &amp; segar</span>
+        </button>
+        <button class="preset-card" onclick="applyPreset('edt')">
+          <span class="p-name">Eau de Toilette</span>
+          <span class="p-desc" id="pdEdt">~13% · casual harian</span>
+        </button>
+        <button class="preset-card" onclick="applyPreset('edp')">
+          <span class="p-name">Eau de Parfum</span>
+          <span class="p-desc" id="pdEdp">~20% · tahan 6–8 jam</span>
+        </button>
+        <button class="preset-card" onclick="applyPreset('extrait')">
+          <span class="p-name">Extrait</span>
+          <span class="p-desc" id="pdExtrait">~30% · intens &amp; lama</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── 4. Bibit slider ── -->
+    <div class="sec a d4">
+      <div class="sec-label">Takaran Bibit</div>
+      <div class="slider-card">
+        <div class="sl-head">
+          <span class="sl-label">Persentase Bibit</span>
+          <span class="sl-val" id="dBibit">25<em>%</em></span>
+        </div>
+        <input type="range" id="slBibit"
+          min="25" max="35" value="25" step="1"
+          oninput="onSlider(this,'bibit')">
+        <div class="sl-hint" id="hBibit">range: 25% — 35%</div>
+      </div>
+    </div>
+
+    <!-- ── 5. Booster slider ── -->
+    <div class="sec a d5">
+      <div class="sec-label">Takaran Booster</div>
+      <div class="slider-card">
+        <div class="sl-head">
+          <span class="sl-label">Booster / Fixative<sub>dari bibit</sub></span>
+          <span class="sl-val" id="dBoost">1.0<em>%</em></span>
+        </div>
+        <input type="range" id="slBoost"
+          min="1" max="500" value="100" step="1"
+          oninput="onSlider(this,'boost')">
+        <div class="sl-hint" id="hBoost">ringan 0.5% · standar 1–2% · tahan lama 3–5%</div>
+      </div>
+    </div>
+
+    <!-- ── Divider ── -->
+    <div class="divider a d5"></div>
+
+    <!-- ── 5. Result ── -->
+    <div class="result-card a d6">
+
+      <div class="result-head">
+        <span class="result-title">Formula Racikan</span>
+        <span class="result-vol-badge" id="rVolBadge">30 ml</span>
+      </div>
+
+      <div class="prog-bar">
+        <div class="pb pb-b"  id="pbB"  style="width:25%"></div>
+        <div class="pb pb-bs" id="pbBs" style="width:0.25%"></div>
+        <div class="pb pb-p"  id="pbP"  style="width:74.75%"></div>
+      </div>
+
+      <div class="f-rows">
+
+        <div class="f-row">
+          <div class="f-mark" style="background:var(--c-bibit)"></div>
+          <div class="f-info">
+            <div class="f-name">Bibit / Biang</div>
+            <div class="f-sub" id="subBibit">25% dari botol</div>
+          </div>
+          <div class="f-val">
+            <div class="f-num" id="rBibit">7.5<span class="f-unit"> ml</span></div>
+          </div>
+        </div>
+
+        <div class="f-row">
+          <div class="f-mark" style="background:var(--c-boost)"></div>
+          <div class="f-info">
+            <div class="f-name">Booster / Fixative</div>
+            <div class="f-sub" id="subBoost">1% dari bibit</div>
+          </div>
+          <div class="f-val">
+            <div class="f-num" id="rBoost">0.08<span class="f-unit"> ml</span></div>
+            <div class="f-drops" id="rDrops">≈ 2 tetes</div>
+            <div class="f-warn" id="rWarn" style="display:none">⚠ pakai pipet mikro</div>
+          </div>
+        </div>
+
+        <div class="f-row">
+          <div class="f-mark" style="background:var(--c-pelarut)"></div>
+          <div class="f-info">
+            <div class="f-name">Pelarut / Alkohol</div>
+            <div class="f-sub">sisa volume botol</div>
+          </div>
+          <div class="f-val">
+            <div class="f-num" id="rPelarut">22.4<span class="f-unit"> ml</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="legend-row">
+        <div class="leg"><div class="leg-mark" style="background:var(--c-bibit)"></div>Bibit</div>
+        <div class="leg"><div class="leg-mark" style="background:var(--c-boost)"></div>Booster</div>
+        <div class="leg"><div class="leg-mark" style="background:var(--c-pelarut)"></div>Pelarut</div>
+      </div>
+
+    </div>
+
+    <!-- ── Tip ── -->
+    <div class="tip a d6">
+      <strong>1 ml ≈ 20 tetes</strong> pipet standar. Booster dihitung dari jumlah bibit, bukan total botol. Bibit premium butuh lebih sedikit karena konsentrasi fragrance oil lebih tinggi.
+    </div>
+
+    <footer>Parfumary · v1.1 · Kalkulator Racik Profesional</footer>
+
+  </div>
+
+  <script>
+    const S = {
+      vol:      30,
+      quality: 'premium',
+      bibitPct: 25,
+      boostPct: 1.0,
+    };
+
+    // Preset bibit% berbeda per kualitas — medium butuh ~1.45× lebih banyak
+    // Referensi: premium mid 30% vs medium mid 43.5% (dari 12hours range)
+    const PRESET_PCT = {
+      premium: { cologne: 8,  edt: 13, edp: 20, extrait: 30 },
+      medium:  { cologne: 12, edt: 19, edp: 29, extrait: 44 },
+    };
+
+    const DROPS_PER_ML = 20;
+    const MICRO_ML     = 0.05;
+
+    /* ── Fill track ── */
+    function fill(el) {
+      const p = ((+el.value - +el.min) / (+el.max - +el.min) * 100).toFixed(2);
+      el.style.setProperty('--fill', p + '%');
+    }
+
+    /* ── Slider event ── */
+    function onSlider(el, type) {
+      fill(el);
+      if (type === 'bibit') {
+        S.bibitPct = +el.value;
+        setHtml('dBibit', S.bibitPct + '<em>%</em>');
+      } else {
+        S.boostPct = +el.value / 100;
+        const d = S.boostPct < 1 ? S.boostPct.toFixed(2) : S.boostPct.toFixed(1);
+        setHtml('dBoost', d + '<em>%</em>');
+      }
+      calc();
+    }
+
+    /* ── Bottle size ── */
+    function pickSize(v, btn) {
+      S.vol = v;
+      document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('customVol').value = '';
+      calc();
+    }
+
+    function customSize(v) {
+      const n = parseFloat(v);
+      if (n > 0) {
+        S.vol = n;
+        document.querySelectorAll('.pill').forEach(b => b.classList.remove('active'));
+        calc();
+      }
+    }
+
+    /* ── Quality ── */
+    function setQuality(q) {
+      S.quality = q;
+      document.getElementById('qPremium').classList.toggle('active', q === 'premium');
+      document.getElementById('qMedium').classList.toggle('active', q === 'medium');
+      const sl = document.getElementById('slBibit');
+      // Reset ke default range — tidak clamp nilai lama (preset bisa di luar range)
+      if (q === 'premium') {
+        sl.min = 25; sl.max = 35;
+        S.bibitPct = 25;
+        document.getElementById('hBibit').textContent = 'range: 25% — 35%';
+      } else {
+        sl.min = 40; sl.max = 47;
+        S.bibitPct = 40;
+        document.getElementById('hBibit').textContent = 'range: 40% — 47%';
+      }
+      sl.value = S.bibitPct;
+      setHtml('dBibit', S.bibitPct + '<em>%</em>');
+      fill(sl);
+      updatePresetLabels();
+      calc();
+    }
+
+    /* ── Brand guide toggle ── */
+    function toggleBrandGuide() {
+      const guide = document.getElementById('brandGuide');
+      const arrow = document.getElementById('brandArrow');
+      const open = guide.classList.toggle('open');
+      arrow.textContent = open ? '▾' : '▸';
+    }
+
+    /* ── Preset ── */
+    // Preset scale otomatis berdasarkan kualitas bibit yang sedang dipilih
+    function applyPreset(key) {
+      const pct = PRESET_PCT[S.quality][key];
+      S.bibitPct = pct;
+      const sl = document.getElementById('slBibit');
+      // Expand slider range jika preset di luar range normal
+      const curMin = +sl.min;
+      const curMax = +sl.max;
+      sl.min = Math.min(curMin, pct);
+      sl.max = Math.max(curMax, pct);
+      document.getElementById('hBibit').textContent = 'preset: ' + pct + '%';
+      sl.value = pct;
+      setHtml('dBibit', pct + '<em>%</em>');
+      fill(sl);
+      calc();
+    }
+
+    /* ── Update preset card labels sesuai kualitas aktif ── */
+    function updatePresetLabels() {
+      const q = S.quality;
+      const labels = {
+        cologne: { premium: '~8% · ringan &amp; segar',  medium: '~12% · ringan &amp; segar' },
+        edt:     { premium: '~13% · casual harian',       medium: '~19% · casual harian' },
+        edp:     { premium: '~20% · tahan 6–8 jam',       medium: '~29% · tahan 6–8 jam' },
+        extrait: { premium: '~30% · intens &amp; lama',   medium: '~44% · intens &amp; lama' },
+      };
+      document.getElementById('pdCologne').innerHTML  = labels.cologne[q];
+      document.getElementById('pdEdt').innerHTML      = labels.edt[q];
+      document.getElementById('pdEdp').innerHTML      = labels.edp[q];
+      document.getElementById('pdExtrait').innerHTML  = labels.extrait[q];
+    }
+
+    /* ── Core calculation ── */
+    function calc() {
+      const vol     = S.vol;
+      const bibitMl = vol * (S.bibitPct / 100);
+      const boostMl = bibitMl * (S.boostPct / 100);
+      const pelMl   = vol - bibitMl - boostMl;
+      const drops   = boostMl * DROPS_PER_ML;
+
+      /* Progress bars */
+      w('pbB',  bibitMl / vol * 100);
+      w('pbBs', boostMl / vol * 100);
+      w('pbP',  pelMl   / vol * 100);
+
+      /* Bibit */
+      setHtml('rBibit', fmt(bibitMl, bibitMl < 1 ? 2 : 1) + '<span class="f-unit"> ml</span>');
+      setText('subBibit', S.bibitPct + '% dari botol');
+
+      /* Booster */
+      const bd = boostMl < 0.1 ? fmt(boostMl, 3) : (boostMl < 1 ? fmt(boostMl, 2) : fmt(boostMl, 1));
+      setHtml('rBoost', bd + '<span class="f-unit"> ml</span>');
+      setText('subBoost', pctStr(S.boostPct) + '% dari bibit');
+
+      if (boostMl < MICRO_ML) {
+        setText('rDrops', '< 1 tetes');
+        show('rWarn', true);
+      } else {
+        setText('rDrops', (drops < 1 ? '< 1' : '≈ ' + Math.round(drops)) + ' tetes');
+        show('rWarn', false);
+      }
+
+      /* Pelarut */
+      setHtml('rPelarut', fmt(pelMl, pelMl < 1 ? 2 : 1) + '<span class="f-unit"> ml</span>');
+
+      /* Volume badge */
+      setText('rVolBadge', fmt(vol, vol % 1 === 0 ? 0 : 1) + ' ml');
+    }
+
+    /* ── Helpers ── */
+    function fmt(n, d = 1) { return parseFloat(n.toFixed(d)); }
+    function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function pctStr(p) { return p < 1 ? p.toFixed(2) : p.toFixed(1); }
+    function w(id, pct) { document.getElementById(id).style.width = pct.toFixed(3) + '%'; }
+    function show(id, v) { document.getElementById(id).style.display = v ? 'block' : 'none'; }
+
+    function setHtml(id, html) {
+      const el = document.getElementById(id);
+      el.innerHTML = html;
+      el.classList.remove('flash');
+      void el.offsetWidth;
+      el.classList.add('flash');
+    }
+
+    function setText(id, txt) {
+      document.getElementById(id).textContent = txt;
+    }
+
+    /* ── Init ── */
+    (function () {
+      fill(document.getElementById('slBibit'));
+      fill(document.getElementById('slBoost'));
+      updatePresetLabels();
+      calc();
+    })();
+  </script>
+</body>
+</html>
