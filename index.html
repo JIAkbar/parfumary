@@ -28,6 +28,23 @@
       --c-pelarut: #2e7060;
     }
 
+    [data-theme="dark"] {
+      --bg:        #0e0c08;
+      --surface:   #141109;
+      --white:     #1c1810;
+      --border:    rgba(240, 225, 195, 0.07);
+      --border-md: rgba(240, 225, 195, 0.13);
+      --border-lg: rgba(240, 225, 195, 0.22);
+      --ink:       #ede6d8;
+      --ink-2:     #c8bfae;
+      --ink-3:     #9a9080;
+      --ink-4:     #6a6258;
+      --ink-5:     #46403a;
+      --c-bibit:   #c89a3a;
+      --c-boost:   #a07898;
+      --c-pelarut: #3e9880;
+    }
+
     html { scroll-behavior: smooth; }
 
     body {
@@ -635,6 +652,41 @@
       line-height: 1.65;
     }
 
+    /* ─── Theme toggle ─── */
+    .theme-btn {
+      background: none;
+      border: 0.5px solid var(--border-md);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--ink-4);
+      font-size: 13px;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .theme-btn:hover {
+      border-color: var(--ink-3);
+      color: var(--ink-2);
+      background: var(--surface);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 6px;
+    }
+
+    /* smooth theme transition */
+    body, .slider-card, .result-card, .q-toggle, .input-wrap, .preset-card, .tip, .brand-guide {
+      transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    }
+
     /* ─── Footer ─── */
     footer {
       text-align: center;
@@ -671,6 +723,10 @@
         <span class="brand-name">Parfumary</span>
         <span class="brand-sub">Kalkulator Racik Parfum</span>
       </div>
+      <div class="header-right">
+      <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle dark mode">
+        <span id="themeIcon">☾</span>
+      </button>
       <!-- 3×3 dots — opacity gradient encodes bibit→pelarut -->
       <div class="dot-grid" aria-hidden="true">
         <div style="width:7px;height:7px;border-radius:50%;background:var(--c-bibit);opacity:.9"></div>
@@ -682,6 +738,7 @@
         <div style="width:7px;height:7px;border-radius:50%;background:var(--c-pelarut);opacity:.3"></div>
         <div style="width:7px;height:7px;border-radius:50%;background:var(--c-pelarut);opacity:.6"></div>
         <div style="width:7px;height:7px;border-radius:50%;background:var(--c-pelarut);opacity:.9"></div>
+      </div>
       </div>
     </header>
 
@@ -1058,8 +1115,27 @@
       document.getElementById(id).textContent = txt;
     }
 
+    /* ── Dark mode ── */
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('parfumary-theme', t);
+      document.getElementById('themeIcon').textContent = t === 'dark' ? '○' : '☾';
+    }
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      setTheme(cur === 'dark' ? 'light' : 'dark');
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('parfumary-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(saved ?? (prefersDark ? 'dark' : 'light'));
+    }
+
     /* ── Init ── */
     (function () {
+      initTheme();
       fill(document.getElementById('slBibit'));
       fill(document.getElementById('slBoost'));
       updatePresetLabels();
