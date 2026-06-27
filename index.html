@@ -652,6 +652,167 @@
       line-height: 1.65;
     }
 
+    /* ─── Simpan Racikan ─── */
+    .save-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      padding: 13px;
+      background: none;
+      border: none;
+      border-top: 0.5px solid var(--border);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .save-btn:hover { background: var(--surface); color: var(--ink-2); }
+
+    .save-form {
+      display: none;
+      padding: 16px 20px 18px;
+      border-top: 0.5px solid var(--border);
+      background: var(--surface);
+    }
+    .save-form.open { display: block; }
+
+    .save-input {
+      background: var(--white);
+      border: 0.5px solid var(--border-md);
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--ink);
+      outline: none;
+      width: 100%;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+    .save-input:focus { border-color: var(--ink-3); }
+    .save-input::placeholder { color: var(--ink-5); }
+
+    .save-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+    .btn-primary {
+      flex: 1;
+      padding: 11px;
+      background: var(--ink);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:hover { opacity: 0.8; }
+
+    .btn-ghost {
+      padding: 11px 16px;
+      background: none;
+      border: 0.5px solid var(--border-md);
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--ink-4);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-ghost:hover { border-color: var(--ink-3); color: var(--ink-2); }
+
+    /* ─── Riwayat Racikan ─── */
+    .riwayat-empty {
+      text-align: center;
+      padding: 28px 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-5);
+      letter-spacing: 0.12em;
+      border: 0.5px dashed var(--border-md);
+      border-radius: 10px;
+    }
+
+    .riwayat-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .riwayat-card {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .riwayat-card:hover { border-color: var(--border-lg); background: var(--surface); }
+
+    .riwayat-info { flex: 1; min-width: 0; }
+
+    .riwayat-nama {
+      font-family: 'Cormorant', serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .riwayat-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: var(--ink-4);
+      margin-top: 5px;
+      letter-spacing: 0.04em;
+      line-height: 1.5;
+    }
+
+    .riwayat-vol {
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      color: var(--ink-3);
+      flex-shrink: 0;
+      letter-spacing: -0.02em;
+      text-align: right;
+    }
+
+    .riwayat-del {
+      background: none;
+      border: none;
+      color: var(--ink-5);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 2px 4px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .riwayat-del:hover { color: #a03030; }
+
+    .export-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .export-row .btn-ghost { flex: 1; text-align: center; }
+
     /* ─── Theme toggle ─── */
     .theme-btn {
       background: none;
@@ -928,6 +1089,19 @@
         <div class="leg"><div class="leg-mark" style="background:var(--c-pelarut)"></div>Pelarut</div>
       </div>
 
+      <!-- Simpan form -->
+      <button class="save-btn" onclick="toggleSaveForm()" id="saveBtnToggle">
+        + Simpan racikan ini
+      </button>
+      <div class="save-form" id="saveForm">
+        <input class="save-input" id="saveNama" placeholder="Nama racikan… (mis. EDP Rose Luzi)" type="text">
+        <input class="save-input" id="saveMerk" placeholder="Merk bibit… (mis. Luzi, Parfarome Exclusive)" type="text">
+        <div class="save-actions">
+          <button class="btn-primary" onclick="confirmSave()">Simpan</button>
+          <button class="btn-ghost" onclick="toggleSaveForm()">Batal</button>
+        </div>
+      </div>
+
     </div>
 
     <!-- ── Tip ── -->
@@ -935,7 +1109,20 @@
       <strong>1 ml ≈ 20 tetes</strong> pipet standar. Booster dihitung dari jumlah bibit, bukan total botol. Bibit premium butuh lebih sedikit karena konsentrasi fragrance oil lebih tinggi.
     </div>
 
-    <footer>Parfumary · v1.1 · Kalkulator Racik Profesional</footer>
+    <!-- ── Riwayat Racikan ── -->
+    <div class="sec a d7" style="margin-top:32px">
+      <div class="sec-label">Riwayat Racikan</div>
+      <div id="riwayatList"></div>
+      <div class="export-row" id="exportRow" style="display:none">
+        <button class="btn-ghost" onclick="exportJSON()">↓ Export JSON</button>
+        <label class="btn-ghost" style="cursor:pointer">
+          ↑ Import JSON
+          <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+        </label>
+      </div>
+    </div>
+
+    <footer>Parfumary · v1.2 · Kalkulator Racik Profesional</footer>
 
   </div>
 
@@ -1115,6 +1302,134 @@
       document.getElementById(id).textContent = txt;
     }
 
+    /* ── Riwayat Racikan ── */
+    const RW_KEY = 'parfumary-riwayat';
+
+    function loadRiwayat() {
+      try { return JSON.parse(localStorage.getItem(RW_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveStore(arr) {
+      localStorage.setItem(RW_KEY, JSON.stringify(arr));
+    }
+
+    function toggleSaveForm() {
+      const f = document.getElementById('saveForm');
+      const open = f.classList.toggle('open');
+      document.getElementById('saveBtnToggle').textContent = open ? '✕ Tutup' : '+ Simpan racikan ini';
+      if (open) setTimeout(() => document.getElementById('saveNama').focus(), 50);
+    }
+
+    function confirmSave() {
+      const nama = document.getElementById('saveNama').value.trim() || 'Racikan tanpa nama';
+      const merk = document.getElementById('saveMerk').value.trim() || '—';
+      const bibitMl = S.vol * (S.bibitPct / 100);
+      const boostMl = bibitMl * (S.boostPct / 100);
+      const entry = {
+        id: Date.now(),
+        tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        nama, merk,
+        vol: S.vol,
+        quality: S.quality,
+        bibitPct: S.bibitPct,
+        boostPct: S.boostPct,
+        bibitMl: +bibitMl.toFixed(2),
+        boostMl: +boostMl.toFixed(3),
+        pelMl:   +(S.vol - bibitMl - boostMl).toFixed(2),
+      };
+      const arr = loadRiwayat();
+      arr.unshift(entry);
+      saveStore(arr);
+      document.getElementById('saveNama').value = '';
+      document.getElementById('saveMerk').value = '';
+      toggleSaveForm();
+      renderRiwayat();
+    }
+
+    function recallRiwayat(id) {
+      const e = loadRiwayat().find(x => x.id === id);
+      if (!e) return;
+      S.vol = e.vol; S.quality = e.quality; S.bibitPct = e.bibitPct; S.boostPct = e.boostPct;
+      // quality UI
+      document.getElementById('qPremium').classList.toggle('active', e.quality === 'premium');
+      document.getElementById('qMedium').classList.toggle('active',  e.quality === 'medium');
+      // volume pills
+      document.querySelectorAll('.pill').forEach(b => {
+        b.classList.toggle('active', parseFloat(b.textContent) === e.vol);
+      });
+      document.getElementById('customVol').value = '';
+      // bibit slider
+      const sl = document.getElementById('slBibit');
+      sl.min = Math.min(+sl.min, e.bibitPct);
+      sl.max = Math.max(+sl.max, e.bibitPct);
+      sl.value = e.bibitPct;
+      setHtml('dBibit', e.bibitPct + '<em>%</em>');
+      fill(sl);
+      // boost slider
+      const slB = document.getElementById('slBoost');
+      slB.value = Math.round(e.boostPct * 100);
+      const d = e.boostPct < 1 ? e.boostPct.toFixed(2) : e.boostPct.toFixed(1);
+      setHtml('dBoost', d + '<em>%</em>');
+      fill(slB);
+      updatePresetLabels();
+      calc();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteRiwayat(id) {
+      saveStore(loadRiwayat().filter(x => x.id !== id));
+      renderRiwayat();
+    }
+
+    function renderRiwayat() {
+      const arr = loadRiwayat();
+      const el = document.getElementById('riwayatList');
+      const exportRow = document.getElementById('exportRow');
+      if (arr.length === 0) {
+        el.innerHTML = '<div class="riwayat-empty">Belum ada racikan tersimpan</div>';
+        exportRow.style.display = 'none';
+        return;
+      }
+      exportRow.style.display = 'flex';
+      el.innerHTML = arr.map(e => `
+        <div class="riwayat-card" onclick="recallRiwayat(${e.id})">
+          <div class="riwayat-info">
+            <div class="riwayat-nama">${e.nama}</div>
+            <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; bibit ${e.bibitPct}% &middot; ${e.tanggal}</div>
+          </div>
+          <div class="riwayat-vol">${e.vol}<span style="font-size:9px;color:var(--ink-5);margin-left:1px">ml</span></div>
+          <button class="riwayat-del" onclick="event.stopPropagation();deleteRiwayat(${e.id})" title="Hapus">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(loadRiwayat(), null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'parfumary-riwayat.json';
+      a.click();
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error();
+          const existing = loadRiwayat();
+          const ids = new Set(existing.map(x => x.id));
+          saveStore([...imported.filter(x => !ids.has(x.id)), ...existing]);
+          renderRiwayat();
+        } catch { alert('File JSON tidak valid.'); }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
     /* ── Dark mode ── */
     function setTheme(t) {
       document.documentElement.setAttribute('data-theme', t);
@@ -1140,6 +1455,7 @@
       fill(document.getElementById('slBoost'));
       updatePresetLabels();
       calc();
+      renderRiwayat();
     })();
   </script>
 </body>
