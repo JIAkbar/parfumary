@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS racikan (
   boost_ml    REAL    NOT NULL,
   pel_ml      REAL    NOT NULL,
   tanggal     TEXT    NOT NULL,
+  catatan     TEXT    DEFAULT '',
   created_at  INTEGER NOT NULL
 );
 

@@ -875,6 +875,36 @@
     }
     .riwayat-del:hover { color: #a03030; }
 
+    .riwayat-catatan {
+      font-size: 11px; color: var(--ink-4); margin-top: 3px;
+      font-style: italic; line-height: 1.4;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ─── Delete confirm modal ─── */
+    .del-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .del-overlay.open { opacity: 1; pointer-events: auto; }
+    .del-modal {
+      background: var(--surface); border: 0.5px solid var(--border-lg);
+      border-radius: 12px; padding: 24px;
+      width: 100%; max-width: 300px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .del-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+    .del-desc { font-size: 13px; color: var(--ink-4); }
+    .del-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-danger {
+      flex: 1; padding: 10px; background: #dc2626; color: #fff;
+      border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+
     .export-row {
       display: flex;
       gap: 8px;
@@ -1004,6 +1034,18 @@
 </head>
 
 <body>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="del-overlay" id="delOverlay">
+    <div class="del-modal">
+      <div class="del-title">Hapus Racikan?</div>
+      <div class="del-desc">Tindakan ini tidak bisa dibatalkan.</div>
+      <div class="del-actions">
+        <button class="btn-ghost" onclick="closeDelModal()">Batal</button>
+        <button class="btn-danger" id="delConfirmBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Kode akun modal ── -->
   <div class="kode-modal-overlay" id="kodeOverlay" onclick="closeKodeModal(event)">
@@ -1282,13 +1324,14 @@
             oninput="acFilter()" onfocus="acOpen()" onkeydown="acKey(event)">
           <div class="ac-drop" id="acDrop"></div>
         </div>
+        <textarea class="save-input" id="saveCatatan" placeholder="Catatan (opsional)… mis. cocok untuk musim hujan" rows="2" style="resize:none;margin-top:8px;"></textarea>
         <div class="save-actions" style="margin-top:10px">
           <button class="btn-primary" onclick="confirmSave()">Simpan Racikan</button>
         </div>
       </div>
 
       <div id="rwSearchWrap" style="display:none;margin-bottom:8px">
-        <input class="save-input" id="rwSearch" type="search" placeholder="Cari nama atau merk…" oninput="renderRiwayat()" style="margin-bottom:0">
+        <input class="save-input" id="rwSearch" type="search" placeholder="Cari nama, merk, atau catatan…" oninput="renderRiwayat()" style="margin-bottom:0">
       </div>
       <div id="riwayatList"></div>
       <div class="export-row" id="exportRow" style="display:none">
@@ -1576,12 +1619,13 @@
     async function confirmSave() {
       const nama = document.getElementById('saveNama').value.trim() || 'Racikan tanpa nama';
       const merk = document.getElementById('saveMerk').value.trim() || '—';
+      const catatan = document.getElementById('saveCatatan').value.trim();
       const bibitMl = S.vol * (S.bibitPct / 100);
       const boostMl = bibitMl * (S.boostPct / 100);
       const entry = {
         id: Date.now(),
         tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-        nama, merk,
+        nama, merk, catatan,
         vol: S.vol, quality: S.quality,
         bibitPct: S.bibitPct, boostPct: S.boostPct,
         bibitMl: +bibitMl.toFixed(2),
@@ -1596,6 +1640,7 @@
 
       document.getElementById('saveNama').value = '';
       document.getElementById('saveMerk').value = '';
+      document.getElementById('saveCatatan').value = '';
       document.getElementById('rwSearch').value = '';
 
       btn.textContent = '✓ Tersimpan';
@@ -1636,6 +1681,21 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    let pendingDeleteId = null;
+
+    function openDelModal(id) {
+      pendingDeleteId = id;
+      document.getElementById('delOverlay').classList.add('open');
+      document.getElementById('delConfirmBtn').onclick = async () => {
+        closeDelModal();
+        await deleteRiwayat(pendingDeleteId);
+      };
+    }
+    function closeDelModal() {
+      document.getElementById('delOverlay').classList.remove('open');
+      pendingDeleteId = null;
+    }
+
     async function deleteRiwayat(id) {
       await rwDelete(id);
       await renderRiwayat();
@@ -1645,7 +1705,9 @@
       const all = await rwLoad();
       const q   = (document.getElementById('rwSearch')?.value || '').toLowerCase().trim();
       const arr = q ? all.filter(e =>
-        e.nama.toLowerCase().includes(q) || e.merk.toLowerCase().includes(q)
+        e.nama.toLowerCase().includes(q) ||
+        e.merk.toLowerCase().includes(q) ||
+        (e.catatan || '').toLowerCase().includes(q)
       ) : all;
       const el        = document.getElementById('riwayatList');
       const exportRow = document.getElementById('exportRow');
@@ -1666,16 +1728,24 @@
         return;
       }
 
-      el.innerHTML = arr.map(e => `
+      const total   = arr.length;
+      const shown   = arr.slice(0, 5);
+
+      el.innerHTML = shown.map(e => `
         <div class="riwayat-card" onclick="recallRiwayat(${e.id})">
           <div class="riwayat-info">
             <div class="riwayat-nama">${e.nama}</div>
             <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; ${e.bibitPct}% &middot; ${e.vol}ml &middot; ${e.tanggal}</div>
+            ${e.catatan ? `<div class="riwayat-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="riwayat-vol">${e.vol}<span style="font-size:9px;color:var(--ink-5);margin-left:1px">ml</span></div>
-          <button class="riwayat-del" onclick="event.stopPropagation();deleteRiwayat(${e.id})" title="Hapus">&times;</button>
+          <button class="riwayat-del" onclick="event.stopPropagation();openDelModal(${e.id})" title="Hapus">&times;</button>
         </div>
       `).join('');
+
+      if (total > 5) {
+        el.innerHTML += `<a href="parfumdb.html" style="font-size:12px;color:var(--ink-4);text-decoration:none;display:block;text-align:center;padding:10px;border-top:0.5px solid var(--border);">+ ${total - 5} lainnya — Lihat Database →</a>`;
+      }
     }
 
     async function exportJSON() {

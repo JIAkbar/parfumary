@@ -482,9 +482,51 @@
       transition: all 0.15s;
     }
     .btn-ghost:hover { background: var(--white); color: var(--ink); }
+
+    /* ── Entry catatan ── */
+    .entry-catatan {
+      font-size: 11px; color: var(--ink-4); margin-top: 2px;
+      font-style: italic; line-height: 1.4;
+    }
+
+    /* ── Delete confirm modal ── */
+    .del-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .del-overlay.open { opacity: 1; pointer-events: auto; }
+    .del-modal {
+      background: var(--surface); border: 0.5px solid var(--border-lg);
+      border-radius: 12px; padding: 24px;
+      width: 100%; max-width: 300px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .del-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+    .del-desc { font-size: 13px; color: var(--ink-4); }
+    .del-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-danger {
+      flex: 1; padding: 10px; background: #dc2626; color: #fff;
+      border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
   </style>
 </head>
 <body>
+
+  <!-- ── Delete confirm modal ── -->
+  <div class="del-overlay" id="delOverlay">
+    <div class="del-modal">
+      <div class="del-title">Hapus Racikan?</div>
+      <div class="del-desc">Tindakan ini tidak bisa dibatalkan.</div>
+      <div class="del-actions">
+        <button class="btn-ghost" onclick="closeDelModal()">Batal</button>
+        <button class="btn-danger" id="delConfirmBtn">Hapus</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Kode akun modal ── -->
   <div class="kode-modal-overlay" id="kodeOverlay" onclick="closeKodeModal(event)">
@@ -584,6 +626,27 @@
     let isOwnerCached = false;
     let katalogCache = [];
     let katalogFilter = 'semua';
+    let pendingDeleteId = null;
+    let pendingDeleteType = null; // 'entry' or 'katalog'
+
+    function openDelModal(id, type) {
+      pendingDeleteId = id;
+      pendingDeleteType = type;
+      document.getElementById('delOverlay').classList.add('open');
+      document.getElementById('delConfirmBtn').onclick = async () => {
+        closeDelModal();
+        if (pendingDeleteType === 'katalog') {
+          await doDeleteKatalog(pendingDeleteId);
+        } else {
+          await doDeleteEntry(pendingDeleteId);
+        }
+      };
+    }
+    function closeDelModal() {
+      document.getElementById('delOverlay').classList.remove('open');
+      pendingDeleteId = null;
+      pendingDeleteType = null;
+    }
 
     /* ── Theme ── */
     function setTheme(t) {
@@ -691,7 +754,7 @@
       const q    = document.getElementById('katalogSearch').value.toLowerCase().trim();
       const sort = document.getElementById('katalogSort').value;
       let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q)) return false;
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
         if (katalogFilter === 'premium' && e.quality !== 'premium') return false;
         if (katalogFilter === 'medium'  && e.quality !== 'medium')  return false;
         if (katalogFilter.startsWith('merk:') && e.merk !== katalogFilter.slice(5)) return false;
@@ -781,8 +844,11 @@
       window.location.href = 'index.html?' + p.toString();
     }
 
-    async function deleteKatalogEntry(id) {
-      if (!confirm('Hapus dari katalog publik?')) return;
+    function deleteKatalogEntry(id) {
+      openDelModal(id, 'katalog');
+    }
+
+    async function doDeleteKatalog(id) {
       await katalogDelete(id);
       katalogCache = await katalogLoad(); // refresh cache
       renderKatalog();
@@ -830,7 +896,7 @@
       buildFilters(all);
 
       let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q)) return false;
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
         if (activeFilter === 'premium' && e.quality !== 'premium') return false;
         if (activeFilter === 'medium'  && e.quality !== 'medium')  return false;
         if (activeFilter.startsWith('merk:') && e.merk !== activeFilter.slice(5)) return false;
@@ -905,6 +971,7 @@
               <span>${e.bibitPct}% bibit</span>
               <span style="color:var(--ink-5)">${e.tanggal}</span>
             </div>
+            ${e.catatan ? `<div class="entry-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="entry-actions">
             ${pubBtn}
@@ -923,7 +990,11 @@
       window.location.href = 'index.html?' + p.toString();
     }
 
-    async function deleteEntry(id) {
+    function deleteEntry(id) {
+      openDelModal(id, 'entry');
+    }
+
+    async function doDeleteEntry(id) {
       await rwDelete(id);
       await render();
     }
