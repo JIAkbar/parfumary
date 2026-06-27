@@ -6,45 +6,45 @@
   <title>Parfumary — Database Racikan</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <script src="api.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #f0ebe0;
-      --surface:   #f6f2ea;
-      --white:     #fdfaf4;
-      --border:    rgba(28, 20, 8, 0.09);
-      --border-md: rgba(28, 20, 8, 0.16);
-      --border-lg: rgba(28, 20, 8, 0.24);
-      --ink:       #16120a;
-      --ink-2:     #2c2418;
-      --ink-3:     #4a4238;
-      --ink-4:     #6e6560;
-      --ink-5:     #9a938c;
-      --c-bibit:   #a07828;
-      --c-boost:   #7a5070;
-      --c-pelarut: #2e7060;
-      --radius:    10px;
+      --bg:        #f7f7f7;
+      --surface:   #efefef;
+      --white:     #ffffff;
+      --border:    rgba(17, 17, 17, 0.08);
+      --border-md: rgba(17, 17, 17, 0.15);
+      --border-lg: rgba(17, 17, 17, 0.26);
+      --ink:       #111111;
+      --ink-2:     #333333;
+      --ink-3:     #666666;
+      --ink-4:     #999999;
+      --ink-5:     #bbbbbb;
+      --c-bibit:   #2563eb;
+      --c-boost:   #7c3aed;
+      --c-pelarut: #059669;
+      --radius:    8px;
     }
 
     [data-theme="dark"] {
-      --bg:        #0e0c08;
-      --surface:   #141109;
-      --white:     #1c1810;
-      --border:    rgba(240, 225, 195, 0.07);
-      --border-md: rgba(240, 225, 195, 0.13);
-      --border-lg: rgba(240, 225, 195, 0.22);
-      --ink:       #ede6d8;
-      --ink-2:     #c8bfae;
-      --ink-3:     #9a9080;
-      --ink-4:     #6a6258;
-      --ink-5:     #46403a;
-      --c-bibit:   #c89a3a;
-      --c-boost:   #a07898;
-      --c-pelarut: #3e9880;
+      --bg:        #111111;
+      --surface:   #1c1c1c;
+      --white:     #222222;
+      --border:    rgba(255, 255, 255, 0.08);
+      --border-md: rgba(255, 255, 255, 0.13);
+      --border-lg: rgba(255, 255, 255, 0.22);
+      --ink:       #ffffff;
+      --ink-2:     #e0e0e0;
+      --ink-3:     #a0a0a0;
+      --ink-4:     #666666;
+      --ink-5:     #404040;
+      --c-bibit:   #3b82f6;
+      --c-boost:   #8b5cf6;
+      --c-pelarut: #10b981;
     }
 
     html { scroll-behavior: smooth; }
@@ -52,8 +52,8 @@
     body {
       background: var(--bg);
       color: var(--ink);
-      font-family: 'Jost', sans-serif;
-      font-weight: 300;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
       min-height: 100dvh;
       -webkit-font-smoothing: antialiased;
     }
@@ -97,10 +97,10 @@
     }
     .header-back:hover { color: var(--ink-2); }
     .header-title {
-      font-family: 'Cormorant', serif;
-      font-size: 28px;
-      font-weight: 300;
-      letter-spacing: 0.02em;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
       color: var(--ink);
     }
     .header-sub {
@@ -123,7 +123,7 @@
     /* ── Kode akun modal ── */
     .kode-modal-overlay {
       position: fixed; inset: 0; z-index: 200;
-      background: rgba(22,18,10,0.45);
+      background: rgba(0,0,0,0.6);
       display: flex; align-items: center; justify-content: center;
       padding: 24px;
       opacity: 0; pointer-events: none; transition: opacity 0.2s;
@@ -135,7 +135,7 @@
       width: 100%; max-width: 320px;
       display: flex; flex-direction: column; gap: 16px;
     }
-    .kode-modal-title { font-family: 'Cormorant', serif; font-size: 22px; color: var(--ink); }
+    .kode-modal-title { font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 700; color: var(--ink); }
     .kode-modal-desc { font-size: 12px; color: var(--ink-4); line-height: 1.8; margin-top: -8px; }
     .kode-input {
       width: 100%;
@@ -178,25 +178,25 @@
       cursor: pointer; transition: color 0.2s, border-color 0.2s;
       margin-bottom: -0.5px;
     }
-    .tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); }
+    .tab-btn.active { color: var(--c-bibit); border-bottom-color: var(--c-bibit); }
 
     /* ── Owner badge & add button ── */
     .owner-badge {
       display: inline-flex; align-items: center; gap: 4px;
       font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--c-bibit); background: rgba(160,120,40,0.1);
-      border: 0.5px solid rgba(160,120,40,0.3);
+      color: var(--c-bibit); background: rgba(59,130,246,0.1);
+      border: 0.5px solid rgba(59,130,246,0.3);
       border-radius: 20px; padding: 3px 8px;
     }
     .btn-publish {
-      font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--c-bibit); background: none;
-      border: 0.5px solid rgba(160,120,40,0.4);
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--c-pelarut); background: none;
+      border: 0.5px solid rgba(16,185,129,0.4);
       border-radius: 6px; padding: 3px 8px;
       cursor: pointer; white-space: nowrap;
       transition: background 0.15s;
     }
-    .btn-publish:hover { background: rgba(160,120,40,0.12); }
+    .btn-publish:hover { background: rgba(16,185,129,0.12); }
     .katalog-empty {
       text-align: center; padding: 40px 20px;
       color: var(--ink-4); font-size: 13px; line-height: 2;
@@ -256,9 +256,9 @@
       border: 0.5px solid var(--border-md);
       border-radius: var(--radius);
       padding: 10px 12px 10px 34px;
-      font-family: 'Jost', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       font-size: 13px;
-      font-weight: 300;
+      font-weight: 400;
       color: var(--ink);
       outline: none;
       transition: border-color 0.2s;
@@ -271,9 +271,9 @@
       border: 0.5px solid var(--border-md);
       border-radius: var(--radius);
       padding: 10px 12px;
-      font-family: 'Jost', sans-serif;
+      font-family: 'DM Sans', sans-serif;
       font-size: 12px;
-      font-weight: 300;
+      font-weight: 400;
       color: var(--ink-3);
       outline: none;
       cursor: pointer;
@@ -290,20 +290,20 @@
     .filter-chip {
       background: var(--surface);
       border: 0.5px solid var(--border);
-      border-radius: 20px;
+      border-radius: 6px;
       padding: 5px 12px;
       font-size: 11px;
-      font-family: 'Jost', sans-serif;
-      font-weight: 300;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 400;
       color: var(--ink-4);
       cursor: pointer;
       transition: all 0.15s;
       white-space: nowrap;
     }
     .filter-chip.active {
-      background: var(--ink);
-      border-color: var(--ink);
-      color: var(--bg);
+      background: var(--c-bibit);
+      border-color: var(--c-bibit);
+      color: #fff;
     }
 
     /* ── View toggle ── */
@@ -327,8 +327,8 @@
       gap: 5px;
       background: none;
       border: none;
-      font-family: 'Jost', sans-serif;
-      font-weight: 300;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
       letter-spacing: 0.05em;
       text-transform: uppercase;
     }
@@ -383,24 +383,23 @@
       border-radius: 20px;
       letter-spacing: 0.03em;
     }
-    .entry-grade.premium  { background: rgba(160,120,40,0.12); color: var(--c-bibit); }
-    .entry-grade.medium   { background: rgba(46,112,96,0.12);  color: var(--c-pelarut); }
+    .entry-grade.premium  { background: rgba(59,130,246,0.12); color: var(--c-bibit); }
+    .entry-grade.medium   { background: rgba(16,185,129,0.12); color: var(--c-pelarut); }
     .entry-actions {
       display: flex;
       gap: 6px;
       flex-shrink: 0;
     }
     .btn-recall {
-      background: var(--ink);
-      color: var(--bg);
+      background: var(--c-bibit);
+      color: #fff;
       border: none;
       border-radius: 6px;
       padding: 6px 10px;
-      font-family: 'Jost', sans-serif;
-      font-size: 10px;
-      font-weight: 400;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0;
       cursor: pointer;
       transition: opacity 0.15s;
       white-space: nowrap;
@@ -421,9 +420,9 @@
 
     /* ── Group view ── */
     .group-header {
-      font-family: 'Cormorant', serif;
-      font-size: 18px;
-      font-weight: 300;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
       color: var(--ink-2);
       padding: 12px 0 6px;
       border-bottom: 0.5px solid var(--border);
@@ -472,12 +471,11 @@
       padding: 10px;
       background: var(--surface);
       border: 0.5px solid var(--border-md);
-      border-radius: var(--radius);
-      font-family: 'Jost', sans-serif;
-      font-size: 11px;
-      font-weight: 400;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0;
       color: var(--ink-3);
       cursor: pointer;
       text-align: center;
@@ -595,7 +593,7 @@
     function setTheme(t) {
       document.documentElement.setAttribute('data-theme', t);
       localStorage.setItem('parfumary-theme', t);
-      document.getElementById('themeIcon').textContent = t === 'dark' ? '○' : '☾';
+      document.getElementById('themeIcon').textContent = t === 'dark' ? '☀' : '☾';
     }
     function toggleTheme() {
       setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
@@ -857,7 +855,7 @@
 
       if (!all.length) {
         el.innerHTML = `<div class="empty-state">
-          <div style="font-family:'Cormorant',serif;font-size:36px;color:var(--ink-4)">◌</div>
+          <div style="font-family:'DM Mono',monospace;font-size:28px;color:var(--ink-4)">◌</div>
           <p>Belum ada racikan tersimpan.</p>
           <a href="index.html">Racik sekarang →</a>
         </div>`;
@@ -972,7 +970,7 @@
     /* ── Init ── */
     (async function () {
       const saved = localStorage.getItem('parfumary-theme');
-      setTheme(saved ?? 'light');
+      setTheme(saved ?? 'dark');
 
       updateKodeBadge();
 
