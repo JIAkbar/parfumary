@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <script src="api.js"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -859,6 +860,65 @@
     }
     .export-row .btn-ghost { flex: 1; text-align: center; }
 
+    /* ─── Kode akun modal ─── */
+    .kode-modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(22,18,10,0.45);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .kode-modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .kode-modal {
+      background: var(--white);
+      border: 0.5px solid var(--border-lg);
+      border-radius: 14px;
+      padding: 28px 24px;
+      width: 100%; max-width: 320px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .kode-modal-title {
+      font-family: 'Cormorant', serif; font-weight: 400;
+      font-size: 22px; color: var(--ink); letter-spacing: 0.02em;
+    }
+    .kode-modal-desc {
+      font-size: 12px; color: var(--ink-4); line-height: 1.8; margin-top: -8px;
+    }
+    .kode-input-wrap {
+      display: flex; gap: 8px;
+    }
+    .kode-input {
+      flex: 1;
+      background: var(--bg); border: 0.5px solid var(--border-md);
+      border-radius: 8px; padding: 10px 14px;
+      font-family: 'DM Mono', monospace; font-size: 14px;
+      color: var(--ink); letter-spacing: 0.08em;
+      outline: none; transition: border-color 0.2s;
+    }
+    .kode-input:focus { border-color: var(--ink-3); }
+    .kode-modal-actions { display: flex; gap: 8px; }
+    .kode-modal-actions .btn-primary { flex: 1; }
+    .kode-modal-actions .btn-ghost { flex: 1; }
+
+    /* ─── Kode badge di header ─── */
+    .kode-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      color: var(--ink-4); letter-spacing: 0.06em;
+      cursor: pointer; padding: 4px 8px;
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      transition: border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .kode-badge:hover { border-color: var(--ink-3); color: var(--ink-2); }
+    .kode-badge .kode-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--ink-5);
+    }
+    .kode-badge.has-kode .kode-dot { background: var(--c-pelarut); }
+
     /* ─── Theme toggle ─── */
     .theme-btn {
       background: none;
@@ -922,6 +982,27 @@
 </head>
 
 <body>
+
+  <!-- ── Kode akun modal ── -->
+  <div class="kode-modal-overlay" id="kodeOverlay" onclick="closeKodeModal(event)">
+    <div class="kode-modal">
+      <div class="kode-modal-title">Kode Akun</div>
+      <div class="kode-modal-desc">Masukkan kode akun untuk menyimpan &amp; sinkron resep di semua perangkat. Buat kode apapun — gunakan kode yang sama di device lain.</div>
+      <div class="kode-input-wrap">
+        <input class="kode-input" id="kodeInput" type="text"
+          placeholder="contoh: MAWAR99"
+          maxlength="32"
+          autocomplete="off"
+          onkeydown="if(event.key==='Enter')saveKodeModal()">
+      </div>
+      <div class="kode-modal-actions">
+        <button class="btn-primary" onclick="saveKodeModal()">Simpan</button>
+        <button class="btn-ghost" onclick="closeKodeModal()">Batal</button>
+      </div>
+      <div id="kodeModalHint" style="font-size:11px;color:var(--ink-5);display:none;text-align:center;"></div>
+    </div>
+  </div>
+
   <div class="container">
 
     <!-- ── Header ── -->
@@ -931,6 +1012,10 @@
         <span class="brand-sub">Kalkulator Racik Parfum</span>
       </div>
       <div class="header-right">
+      <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()" title="Kode akun">
+        <span class="kode-dot"></span>
+        <span id="kodeLabel">Masuk</span>
+      </button>
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle dark mode">
         <span id="themeIcon">☾</span>
       </button>
@@ -1155,10 +1240,6 @@
         <div class="leg"><div class="leg-mark" style="background:var(--c-pelarut)"></div>Pelarut</div>
       </div>
 
-      <!-- Simpan shortcut -->
-      <button class="save-btn" onclick="scrollToSave()">
-        + Simpan racikan ini ↓
-      </button>
 
     </div>
 
@@ -1184,6 +1265,9 @@
         </div>
       </div>
 
+      <div id="rwSearchWrap" style="display:none;margin-bottom:8px">
+        <input class="save-input" id="rwSearch" type="search" placeholder="Cari nama atau merk…" oninput="renderRiwayat()" style="margin-bottom:0">
+      </div>
       <div id="riwayatList"></div>
       <div class="export-row" id="exportRow" style="display:none">
         <button class="btn-ghost" onclick="exportJSON()">↓ Export JSON</button>
@@ -1194,7 +1278,10 @@
       </div>
     </div>
 
-    <footer>Parfumary · v1.2 · Kalkulator Racik Profesional</footer>
+    <footer>
+      Parfumary · v1.2 ·
+      <a href="parfumdb.html" style="color:var(--ink-4);text-decoration:none;border-bottom:0.5px solid var(--border-md)">Database Racikan →</a>
+    </footer>
 
   </div>
 
@@ -1374,17 +1461,7 @@
       document.getElementById(id).textContent = txt;
     }
 
-    /* ── Riwayat Racikan ── */
-    const RW_KEY = 'parfumary-riwayat';
-
-    function loadRiwayat() {
-      try { return JSON.parse(localStorage.getItem(RW_KEY)) || []; }
-      catch { return []; }
-    }
-
-    function saveStore(arr) {
-      localStorage.setItem(RW_KEY, JSON.stringify(arr));
-    }
+    /* ── Riwayat Racikan (via api.js → D1 / localStorage fallback) ── */
 
     /* ─── Brand Data & Autocomplete ─── */
     const BRANDS = [
@@ -1471,7 +1548,7 @@
       setTimeout(() => document.getElementById('saveNama').focus(), 400);
     }
 
-    function confirmSave() {
+    async function confirmSave() {
       const nama = document.getElementById('saveNama').value.trim() || 'Racikan tanpa nama';
       const merk = document.getElementById('saveMerk').value.trim() || '—';
       const bibitMl = S.vol * (S.bibitPct / 100);
@@ -1480,25 +1557,32 @@
         id: Date.now(),
         tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
         nama, merk,
-        vol: S.vol,
-        quality: S.quality,
-        bibitPct: S.bibitPct,
-        boostPct: S.boostPct,
+        vol: S.vol, quality: S.quality,
+        bibitPct: S.bibitPct, boostPct: S.boostPct,
         bibitMl: +bibitMl.toFixed(2),
         boostMl: +boostMl.toFixed(3),
         pelMl:   +(S.vol - bibitMl - boostMl).toFixed(2),
       };
-      const arr = loadRiwayat();
-      arr.unshift(entry);
-      saveStore(arr);
+
+      const btn = document.querySelector('#saveForm .btn-primary');
+      btn.disabled = true;
+      await rwSave(entry);
+      btn.disabled = false;
+
       document.getElementById('saveNama').value = '';
       document.getElementById('saveMerk').value = '';
-      toggleSaveForm();
-      renderRiwayat();
+      document.getElementById('rwSearch').value = '';
+
+      btn.textContent = '✓ Tersimpan';
+      btn.style.background = 'var(--c-pelarut)';
+      setTimeout(() => { btn.textContent = 'Simpan Racikan'; btn.style.background = ''; }, 1500);
+
+      await renderRiwayat();
     }
 
-    function recallRiwayat(id) {
-      const e = loadRiwayat().find(x => x.id === id);
+    async function recallRiwayat(id) {
+      const all = await rwLoad();
+      const e = all.find(x => x.id === id);
       if (!e) return;
       S.vol = e.vol; S.quality = e.quality; S.bibitPct = e.bibitPct; S.boostPct = e.boostPct;
       // quality UI
@@ -1527,26 +1611,41 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function deleteRiwayat(id) {
-      saveStore(loadRiwayat().filter(x => x.id !== id));
-      renderRiwayat();
+    async function deleteRiwayat(id) {
+      await rwDelete(id);
+      await renderRiwayat();
     }
 
-    function renderRiwayat() {
-      const arr = loadRiwayat();
-      const el = document.getElementById('riwayatList');
+    async function renderRiwayat() {
+      const all = await rwLoad();
+      const q   = (document.getElementById('rwSearch')?.value || '').toLowerCase().trim();
+      const arr = q ? all.filter(e =>
+        e.nama.toLowerCase().includes(q) || e.merk.toLowerCase().includes(q)
+      ) : all;
+      const el        = document.getElementById('riwayatList');
       const exportRow = document.getElementById('exportRow');
-      if (arr.length === 0) {
+      const searchWrap = document.getElementById('rwSearchWrap');
+
+      if (all.length === 0) {
         el.innerHTML = '<div class="riwayat-empty">Belum ada racikan tersimpan</div>';
         exportRow.style.display = 'none';
+        searchWrap.style.display = 'none';
         return;
       }
+
+      searchWrap.style.display = 'block';
       exportRow.style.display = 'flex';
+
+      if (arr.length === 0) {
+        el.innerHTML = '<div class="riwayat-empty">Tidak ditemukan</div>';
+        return;
+      }
+
       el.innerHTML = arr.map(e => `
         <div class="riwayat-card" onclick="recallRiwayat(${e.id})">
           <div class="riwayat-info">
             <div class="riwayat-nama">${e.nama}</div>
-            <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; bibit ${e.bibitPct}% &middot; ${e.tanggal}</div>
+            <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; ${e.bibitPct}% &middot; ${e.vol}ml &middot; ${e.tanggal}</div>
           </div>
           <div class="riwayat-vol">${e.vol}<span style="font-size:9px;color:var(--ink-5);margin-left:1px">ml</span></div>
           <button class="riwayat-del" onclick="event.stopPropagation();deleteRiwayat(${e.id})" title="Hapus">&times;</button>
@@ -1554,8 +1653,9 @@
       `).join('');
     }
 
-    function exportJSON() {
-      const blob = new Blob([JSON.stringify(loadRiwayat(), null, 2)], { type: 'application/json' });
+    async function exportJSON() {
+      const data = await rwLoad();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'parfumary-riwayat.json';
@@ -1566,14 +1666,15 @@
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = e => {
+      reader.onload = async e => {
         try {
           const imported = JSON.parse(e.target.result);
           if (!Array.isArray(imported)) throw new Error();
-          const existing = loadRiwayat();
+          const existing = await rwLoad();
           const ids = new Set(existing.map(x => x.id));
-          saveStore([...imported.filter(x => !ids.has(x.id)), ...existing]);
-          renderRiwayat();
+          const news = imported.filter(x => !ids.has(x.id));
+          for (const entry of news) await rwSave(entry);
+          await renderRiwayat();
         } catch { alert('File JSON tidak valid.'); }
       };
       reader.readAsText(file);
@@ -1597,9 +1698,95 @@
       setTheme(saved ?? 'light');
     }
 
+    /* ── Kode akun modal ── */
+    function openKodeModal() {
+      const existing = getKode();
+      document.getElementById('kodeInput').value = existing ?? '';
+      const hint = document.getElementById('kodeModalHint');
+      if (existing) {
+        hint.textContent = 'Kode saat ini: ' + existing + ' — kosongkan untuk keluar';
+        hint.style.display = 'block';
+      } else {
+        hint.style.display = 'none';
+      }
+      document.getElementById('kodeOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('kodeInput').focus(), 50);
+    }
+
+    function closeKodeModal(e) {
+      if (e && e.target !== document.getElementById('kodeOverlay')) return;
+      document.getElementById('kodeOverlay').classList.remove('open');
+    }
+
+    function saveKodeModal() {
+      const val = document.getElementById('kodeInput').value.trim();
+      if (!val) {
+        clearKode();
+        updateKodeBadge();
+        renderRiwayat();
+      } else {
+        setKode(val);
+        updateKodeBadge();
+        migrateToD1().then(() => renderRiwayat());
+      }
+      document.getElementById('kodeOverlay').classList.remove('open');
+    }
+
+    function updateKodeBadge() {
+      const kode = getKode();
+      const badge = document.getElementById('kodeBadge');
+      const label = document.getElementById('kodeLabel');
+      if (kode) {
+        badge.classList.add('has-kode');
+        label.textContent = kode;
+      } else {
+        badge.classList.remove('has-kode');
+        label.textContent = 'Masuk';
+      }
+    }
+
     /* ── Init ── */
     (function () {
       initTheme();
+      updateKodeBadge();
+
+      // Muat riwayat (localStorage jika tanpa kode, D1 jika ada kode)
+      migrateToD1().then(() => renderRiwayat());
+
+      // Recall dari parfumdb via URL params
+      const p = new URLSearchParams(location.search);
+      if (p.has('vol')) {
+        const vol = parseFloat(p.get('vol'));
+        if (vol > 0) {
+          S.vol = vol;
+          // Set pill aktif atau isi custom
+          const pills = document.querySelectorAll('.pill');
+          let matched = false;
+          pills.forEach(b => {
+            if (+b.dataset.vol === vol) { b.classList.add('active'); matched = true; }
+            else b.classList.remove('active');
+          });
+          if (!matched) document.getElementById('customVol').value = vol;
+        }
+        if (p.has('quality')) setQuality(p.get('quality'));
+        if (p.has('bibit')) {
+          S.bibitPct = +p.get('bibit');
+          const sl = document.getElementById('slBibit');
+          sl.min = Math.min(+sl.min, S.bibitPct);
+          sl.max = Math.max(+sl.max, S.bibitPct);
+          sl.value = S.bibitPct;
+          setHtml('dBibit', S.bibitPct + '<em>%</em>');
+        }
+        if (p.has('boost')) {
+          S.boostPct = +p.get('boost');
+          const sl = document.getElementById('slBoost');
+          sl.value = Math.round(S.boostPct * 100);
+          setHtml('dBoost', S.boostPct.toFixed(2) + '<em>%</em>');
+        }
+        // Bersihkan URL tanpa reload
+        history.replaceState(null, '', location.pathname);
+      }
+
       fill(document.getElementById('slBibit'));
       fill(document.getElementById('slBoost'));
       updatePresetLabels();

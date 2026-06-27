@@ -1,0 +1,13 @@
+name       = "parfumary"
+pages_build_output_dir = "."
+
+# OWNER_KEY: kode rahasia untuk akses admin katalog
+# Ganti nilai ini dengan kode yang kamu mau, lalu set sebagai secret di CF Pages dashboard
+# CF Pages dashboard → Settings → Environment variables → Add secret OWNER_KEY
+[vars]
+OWNER_KEY = "GANTI_KODE_OWNER_DI_CF_DASHBOARD"
+
+[[d1_databases]]
+binding      = "DB"          # env.DB di dalam Worker
+database_name = "parfumary-db"
+database_id  = "9443e6e6-3a39-49ce-ac47-63a31c4bc033"

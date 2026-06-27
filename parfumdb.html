@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Parfumary — Database Racikan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+  <script src="api.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f0ebe0;
+      --surface:   #f6f2ea;
+      --white:     #fdfaf4;
+      --border:    rgba(28, 20, 8, 0.09);
+      --border-md: rgba(28, 20, 8, 0.16);
+      --border-lg: rgba(28, 20, 8, 0.24);
+      --ink:       #16120a;
+      --ink-2:     #2c2418;
+      --ink-3:     #4a4238;
+      --ink-4:     #6e6560;
+      --ink-5:     #9a938c;
+      --c-bibit:   #a07828;
+      --c-boost:   #7a5070;
+      --c-pelarut: #2e7060;
+      --radius:    10px;
+    }
+
+    [data-theme="dark"] {
+      --bg:        #0e0c08;
+      --surface:   #141109;
+      --white:     #1c1810;
+      --border:    rgba(240, 225, 195, 0.07);
+      --border-md: rgba(240, 225, 195, 0.13);
+      --border-lg: rgba(240, 225, 195, 0.22);
+      --ink:       #ede6d8;
+      --ink-2:     #c8bfae;
+      --ink-3:     #9a9080;
+      --ink-4:     #6a6258;
+      --ink-5:     #46403a;
+      --c-bibit:   #c89a3a;
+      --c-boost:   #a07898;
+      --c-pelarut: #3e9880;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.018'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 48px 0 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .header-left { display: flex; flex-direction: column; gap: 4px; }
+    .header-back {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--ink-4);
+      text-decoration: none;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 8px;
+      transition: color 0.2s;
+    }
+    .header-back:hover { color: var(--ink-2); }
+    .header-title {
+      font-family: 'Cormorant', serif;
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
+    .header-sub {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      margin-top: 2px;
+    }
+    .theme-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--ink-4);
+      padding: 4px;
+      margin-top: 4px;
+    }
+
+    /* ── Kode akun modal ── */
+    .kode-modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(22,18,10,0.45);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .kode-modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .kode-modal {
+      background: var(--white); border: 0.5px solid var(--border-lg);
+      border-radius: 14px; padding: 28px 24px;
+      width: 100%; max-width: 320px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .kode-modal-title { font-family: 'Cormorant', serif; font-size: 22px; color: var(--ink); }
+    .kode-modal-desc { font-size: 12px; color: var(--ink-4); line-height: 1.8; margin-top: -8px; }
+    .kode-input {
+      width: 100%;
+      background: var(--bg); border: 0.5px solid var(--border-md);
+      border-radius: 8px; padding: 10px 14px;
+      font-family: 'DM Mono', monospace; font-size: 14px;
+      color: var(--ink); letter-spacing: 0.08em;
+      outline: none; transition: border-color 0.2s;
+    }
+    .kode-input:focus { border-color: var(--ink-3); }
+    .kode-modal-actions { display: flex; gap: 8px; }
+    .kode-modal-actions .btn-ghost { flex: 1; }
+
+    /* ── Kode badge ── */
+    .kode-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      color: var(--ink-4); letter-spacing: 0.06em;
+      cursor: pointer; padding: 4px 8px;
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      transition: border-color 0.2s, color 0.2s;
+      background: none; white-space: nowrap;
+    }
+    .kode-badge:hover { border-color: var(--ink-3); color: var(--ink-2); }
+    .kode-badge .kode-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-5); }
+    .kode-badge.has-kode .kode-dot { background: var(--c-pelarut); }
+
+    /* ── Tabs ── */
+    .tab-row {
+      display: flex; gap: 0;
+      border-bottom: 0.5px solid var(--border-md);
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 10px 16px 8px;
+      font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--ink-4); background: none; border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer; transition: color 0.2s, border-color 0.2s;
+      margin-bottom: -0.5px;
+    }
+    .tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+    /* ── Owner badge & add button ── */
+    .owner-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--c-bibit); background: rgba(160,120,40,0.1);
+      border: 0.5px solid rgba(160,120,40,0.3);
+      border-radius: 20px; padding: 3px 8px;
+    }
+    .btn-publish {
+      font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--c-bibit); background: none;
+      border: 0.5px solid rgba(160,120,40,0.4);
+      border-radius: 6px; padding: 3px 8px;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-publish:hover { background: rgba(160,120,40,0.12); }
+    .katalog-empty {
+      text-align: center; padding: 40px 20px;
+      color: var(--ink-4); font-size: 13px; line-height: 2;
+    }
+    .kode-prompt {
+      text-align: center; padding: 32px 20px;
+      color: var(--ink-4); font-size: 13px; line-height: 2;
+    }
+    .kode-prompt button {
+      display: inline-block; margin-top: 8px;
+      padding: 8px 20px; font-size: 11px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      background: var(--surface); border: 0.5px solid var(--border-md);
+      border-radius: 8px; cursor: pointer; color: var(--ink-3);
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .stat-chip {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--ink-3);
+      white-space: nowrap;
+    }
+    .stat-chip span { color: var(--ink); font-weight: 400; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .search-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--ink-4);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      background: var(--white);
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius);
+      padding: 10px 12px 10px 34px;
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--ink-3); }
+    .search-input::placeholder { color: var(--ink-5); }
+
+    .sort-sel {
+      background: var(--white);
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--ink-3);
+      outline: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Filter chips ── */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .filter-chip {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      color: var(--ink-4);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-chip.active {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--bg);
+    }
+
+    /* ── View toggle ── */
+    .view-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .result-count {
+      font-size: 11px;
+      color: var(--ink-4);
+      letter-spacing: 0.05em;
+    }
+    .group-toggle {
+      font-size: 11px;
+      color: var(--ink-4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .group-toggle.on { color: var(--c-bibit); }
+
+    /* ── Entry card ── */
+    .entry-card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .entry-card:hover { border-color: var(--border-md); background: var(--white); }
+    .entry-vol {
+      font-family: 'DM Mono', monospace;
+      font-size: 20px;
+      font-weight: 300;
+      color: var(--ink-3);
+      min-width: 42px;
+      text-align: center;
+      line-height: 1;
+    }
+    .entry-vol em { font-size: 9px; font-style: normal; color: var(--ink-5); margin-left: 1px; }
+    .entry-body { flex: 1; min-width: 0; }
+    .entry-nama {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .entry-meta {
+      font-size: 11px;
+      color: var(--ink-4);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .entry-grade {
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 20px;
+      letter-spacing: 0.03em;
+    }
+    .entry-grade.premium  { background: rgba(160,120,40,0.12); color: var(--c-bibit); }
+    .entry-grade.medium   { background: rgba(46,112,96,0.12);  color: var(--c-pelarut); }
+    .entry-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-recall {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn-recall:hover { opacity: 0.75; }
+    .btn-del {
+      background: none;
+      border: 0.5px solid var(--border-md);
+      border-radius: 6px;
+      color: var(--ink-4);
+      padding: 6px 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .btn-del:hover { border-color: #c05050; color: #c05050; }
+
+    /* ── Group view ── */
+    .group-header {
+      font-family: 'Cormorant', serif;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--ink-2);
+      padding: 12px 0 6px;
+      border-bottom: 0.5px solid var(--border);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .group-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-4);
+      font-style: normal;
+    }
+    .group-block { margin-bottom: 20px; }
+
+    /* ── Empty / loading ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--ink-4);
+    }
+    .empty-state p { font-size: 13px; margin-top: 8px; }
+    .empty-state a {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      text-decoration: none;
+      border-bottom: 0.5px solid var(--border-md);
+      padding-bottom: 2px;
+    }
+
+    /* ── Footer row ── */
+    .footer-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 0.5px solid var(--border);
+    }
+    .btn-ghost {
+      flex: 1;
+      padding: 10px;
+      background: var(--surface);
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius);
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: var(--white); color: var(--ink); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Kode akun modal ── -->
+  <div class="kode-modal-overlay" id="kodeOverlay" onclick="closeKodeModal(event)">
+    <div class="kode-modal">
+      <div class="kode-modal-title">Kode Akun</div>
+      <div class="kode-modal-desc">Masukkan kode akun untuk menyimpan &amp; akses resep dari perangkat mana saja.</div>
+      <input class="kode-input" id="kodeInput" type="text"
+        placeholder="contoh: MAWAR99"
+        maxlength="32" autocomplete="off"
+        onkeydown="if(event.key==='Enter')saveKodeModal()">
+      <div class="kode-modal-actions">
+        <button class="btn-ghost" onclick="saveKodeModal()">Simpan</button>
+        <button class="btn-ghost" onclick="closeKodeModal()">Batal</button>
+      </div>
+      <div id="kodeModalHint" style="font-size:11px;color:var(--ink-5);display:none;text-align:center;"></div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ── Header ── -->
+    <div class="header">
+      <div class="header-left">
+        <a class="header-back" href="index.html">← Kalkulator</a>
+        <div class="header-title">Database Racikan</div>
+        <div class="header-sub" id="ownerBadgeWrap">Parfumary</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+        <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()">
+          <span class="kode-dot"></span>
+          <span id="kodeLabel">Masuk</span>
+        </button>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">☾</button>
+      </div>
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="tab-row">
+      <button class="tab-btn active" id="tabKatalog" onclick="switchTab('katalog')">Katalog</button>
+      <button class="tab-btn" id="tabResepku" onclick="switchTab('resepku')">Resep Saya</button>
+    </div>
+
+    <!-- ── Section Katalog ── -->
+    <div id="sectionKatalog">
+      <div class="stats-bar" id="statsKatalog"></div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" id="katalogSearch" type="search"
+            placeholder="Cari nama atau merk…" oninput="renderKatalog()">
+        </div>
+        <select class="sort-sel" id="katalogSort" onchange="renderKatalog()">
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+          <option value="nama">Nama A–Z</option>
+          <option value="vol-asc">Volume ↑</option>
+          <option value="vol-desc">Volume ↓</option>
+        </select>
+      </div>
+      <div class="filter-row" id="katalogFilters"></div>
+      <div id="katalogList"></div>
+    </div>
+
+    <!-- ── Section Resep Saya ── -->
+    <div id="sectionResepku" style="display:none">
+      <div class="stats-bar" id="statsResepku"></div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" id="dbSearch" type="search"
+            placeholder="Cari nama atau merk…" oninput="renderResepku()">
+        </div>
+        <select class="sort-sel" id="sortSel" onchange="renderResepku()">
+          <option value="newest">Terbaru</option>
+          <option value="oldest">Terlama</option>
+          <option value="nama">Nama A–Z</option>
+          <option value="vol-asc">Volume ↑</option>
+          <option value="vol-desc">Volume ↓</option>
+        </select>
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+      <div class="view-row">
+        <span class="result-count" id="resultCount"></span>
+        <button class="group-toggle" id="groupBtn" onclick="toggleGroup()">⊞ Grup per nama</button>
+      </div>
+      <div id="dbList"></div>
+      <div class="footer-row" id="footerRow" style="display:none">
+        <button class="btn-ghost" onclick="exportJSON()">↓ Export JSON</button>
+        <label class="btn-ghost">↑ Import JSON
+          <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let groupMode = false;
+    let activeFilter = 'semua';
+    let activeTab = 'katalog';
+    let isOwnerCached = false;
+    let katalogCache = [];
+    let katalogFilter = 'semua';
+
+    /* ── Theme ── */
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('parfumary-theme', t);
+      document.getElementById('themeIcon').textContent = t === 'dark' ? '○' : '☾';
+    }
+    function toggleTheme() {
+      setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    }
+
+    /* ── Filter chips ── */
+    function buildFilters(arr) {
+      const merks = [...new Set(arr.map(e => e.merk).filter(m => m && m !== '—'))].sort();
+      const row = document.getElementById('filterRow');
+
+      const chips = [
+        { val: 'semua',   label: 'Semua' },
+        { val: 'premium', label: 'Premium' },
+        { val: 'medium',  label: 'Medium' },
+        ...merks.slice(0, 6).map(m => ({ val: 'merk:' + m, label: m })),
+      ];
+
+      row.innerHTML = chips.map(c =>
+        `<span class="filter-chip ${activeFilter === c.val ? 'active' : ''}"
+          onclick="setFilter('${c.val.replace(/'/g,"\\'")}')">
+          ${c.label}
+        </span>`
+      ).join('');
+    }
+
+    function setFilter(val) {
+      activeFilter = val;
+      render();
+    }
+
+    /* ── Stats ── */
+    function renderStats(arr) {
+      if (!arr.length) { document.getElementById('statsBar').innerHTML = ''; return; }
+      const merkCount = {};
+      arr.forEach(e => { if (e.merk && e.merk !== '—') merkCount[e.merk] = (merkCount[e.merk] || 0) + 1; });
+      const topMerk = Object.entries(merkCount).sort((a,b) => b[1]-a[1])[0];
+      document.getElementById('statsBar').innerHTML = `
+        <span class="stat-chip"><span>${arr.length}</span> racikan</span>
+        ${topMerk ? `<span class="stat-chip">⬤ <span>${topMerk[0]}</span></span>` : ''}
+        <span class="stat-chip"><span>${[...new Set(arr.map(e=>e.nama))].length}</span> formula</span>
+      `;
+    }
+
+    /* ── Tab switch ── */
+    function switchTab(tab) {
+      activeTab = tab;
+      document.getElementById('tabKatalog').classList.toggle('active', tab === 'katalog');
+      document.getElementById('tabResepku').classList.toggle('active', tab === 'resepku');
+      document.getElementById('sectionKatalog').style.display = tab === 'katalog' ? '' : 'none';
+      document.getElementById('sectionResepku').style.display = tab === 'resepku' ? '' : 'none';
+      if (tab === 'katalog') renderKatalog();
+      else renderResepku();
+    }
+
+    /* ── Kode akun modal ── */
+    function openKodeModal() {
+      const existing = getKode();
+      document.getElementById('kodeInput').value = existing ?? '';
+      const hint = document.getElementById('kodeModalHint');
+      if (existing) {
+        hint.textContent = 'Kode saat ini: ' + existing + ' — kosongkan untuk keluar';
+        hint.style.display = 'block';
+      } else { hint.style.display = 'none'; }
+      document.getElementById('kodeOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('kodeInput').focus(), 50);
+    }
+    function closeKodeModal(e) {
+      if (e && e.target !== document.getElementById('kodeOverlay')) return;
+      document.getElementById('kodeOverlay').classList.remove('open');
+    }
+    async function saveKodeModal() {
+      const val = document.getElementById('kodeInput').value.trim();
+      if (!val) {
+        clearKode();
+      } else {
+        setKode(val);
+        isOwnerCached = await checkIsOwner();
+        updateOwnerUI();
+      }
+      updateKodeBadge();
+      document.getElementById('kodeOverlay').classList.remove('open');
+      if (activeTab === 'resepku') renderResepku();
+    }
+    function updateKodeBadge() {
+      const kode = getKode();
+      const badge = document.getElementById('kodeBadge');
+      document.getElementById('kodeLabel').textContent = kode ?? 'Masuk';
+      badge.classList.toggle('has-kode', !!kode);
+    }
+    function updateOwnerUI() {
+      const wrap = document.getElementById('ownerBadgeWrap');
+      wrap.innerHTML = isOwnerCached
+        ? 'Parfumary &nbsp;<span class="owner-badge">⬤ Owner</span>'
+        : 'Parfumary';
+    }
+
+    /* ── Katalog helpers ── */
+    function filterSortKatalog(all) {
+      const q    = document.getElementById('katalogSearch').value.toLowerCase().trim();
+      const sort = document.getElementById('katalogSort').value;
+      let arr = all.filter(e => {
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q)) return false;
+        if (katalogFilter === 'premium' && e.quality !== 'premium') return false;
+        if (katalogFilter === 'medium'  && e.quality !== 'medium')  return false;
+        if (katalogFilter.startsWith('merk:') && e.merk !== katalogFilter.slice(5)) return false;
+        return true;
+      });
+      return arr.sort((a, b) => {
+        if (sort === 'oldest')   return a.id - b.id;
+        if (sort === 'nama')     return a.nama.localeCompare(b.nama, 'id');
+        if (sort === 'vol-asc')  return a.vol - b.vol;
+        if (sort === 'vol-desc') return b.vol - a.vol;
+        return b.id - a.id;
+      });
+    }
+
+    function buildKatalogFilters(all) {
+      const merks = [...new Set(all.map(e => e.merk).filter(m => m && m !== '—'))].sort();
+      const chips = [
+        { val: 'semua', label: 'Semua' },
+        { val: 'premium', label: 'Premium' },
+        { val: 'medium', label: 'Medium' },
+        ...merks.slice(0, 5).map(m => ({ val: 'merk:' + m, label: m })),
+      ];
+      document.getElementById('katalogFilters').innerHTML = chips.map(c =>
+        `<span class="filter-chip ${katalogFilter === c.val ? 'active' : ''}"
+          onclick="setKatalogFilter('${c.val.replace(/'/g,"\\'")}')">
+          ${c.label}</span>`
+      ).join('');
+    }
+
+    function setKatalogFilter(val) { katalogFilter = val; renderKatalog(); }
+
+    async function renderKatalog() {
+      const all = katalogCache.length ? katalogCache : (katalogCache = await katalogLoad());
+      const arr = filterSortKatalog(all);
+      buildKatalogFilters(all);
+
+      // Stats
+      const merkCount = {};
+      all.forEach(e => { if (e.merk && e.merk !== '—') merkCount[e.merk] = (merkCount[e.merk]||0)+1; });
+      const topMerk = Object.entries(merkCount).sort((a,b) => b[1]-a[1])[0];
+      document.getElementById('statsKatalog').innerHTML = all.length
+        ? `<span class="stat-chip"><span>${all.length}</span> resep</span>
+           ${topMerk ? `<span class="stat-chip">⬤ <span>${topMerk[0]}</span></span>` : ''}
+           ${isOwnerCached ? '<span class="stat-chip owner-badge">⬤ Owner mode</span>' : ''}`
+        : '';
+
+      const el = document.getElementById('katalogList');
+      if (!all.length) {
+        el.innerHTML = isOwnerCached
+          ? '<div class="katalog-empty">Belum ada resep di katalog.<br>Publikasikan dari tab <strong>Resep Saya</strong>.</div>'
+          : '<div class="katalog-empty">Katalog masih kosong.</div>';
+        return;
+      }
+      if (!arr.length) { el.innerHTML = '<div class="katalog-empty">Tidak ditemukan.</div>'; return; }
+      el.innerHTML = arr.map(e => katalogCardHTML(e)).join('');
+    }
+
+    function katalogCardHTML(e) {
+      const gc = e.quality === 'premium' ? 'premium' : 'medium';
+      const gl = e.quality === 'premium' ? 'Premium' : 'Medium';
+      const ownerBtns = isOwnerCached
+        ? `<button class="btn-del" onclick="deleteKatalogEntry(${e.id})" title="Hapus dari katalog">×</button>`
+        : '';
+      return `
+        <div class="entry-card">
+          <div class="entry-vol">${e.vol}<em>ml</em></div>
+          <div class="entry-body">
+            <div class="entry-nama">${e.nama}</div>
+            <div class="entry-meta">
+              <span>${e.merk}</span>
+              <span class="entry-grade ${gc}">${gl}</span>
+              <span>${e.bibitPct}% bibit</span>
+              ${e.catatan ? `<span style="color:var(--ink-4);font-style:italic">${e.catatan}</span>` : ''}
+            </div>
+          </div>
+          <div class="entry-actions">
+            <button class="btn-recall" onclick="recallKatalogEntry(${e.id})">Salin</button>
+            ${ownerBtns}
+          </div>
+        </div>`;
+    }
+
+    function recallKatalogEntry(id) {
+      const e = katalogCache.find(x => x.id === id);
+      if (!e) return;
+      const p = new URLSearchParams({ vol: e.vol, quality: e.quality, bibit: e.bibitPct, boost: e.boostPct });
+      window.location.href = 'index.html?' + p.toString();
+    }
+
+    async function deleteKatalogEntry(id) {
+      if (!confirm('Hapus dari katalog publik?')) return;
+      await katalogDelete(id);
+      katalogCache = await katalogLoad(); // refresh cache
+      renderKatalog();
+    }
+
+    async function publishToKatalog(id) {
+      const all = await rwLoad();
+      const e = all.find(x => x.id === id);
+      if (!e) return;
+      const catatan = prompt('Catatan untuk katalog (opsional):') ?? '';
+      await katalogSave({ ...e, catatan });
+      katalogCache = []; // clear cache
+      alert('✓ Resep dipublikasikan ke katalog!');
+    }
+
+    /* ── Resep saya (personal) ── */
+    async function renderResepku() {
+      if (!getKode()) {
+        document.getElementById('dbList').innerHTML = `
+          <div class="kode-prompt">
+            Masukkan kode akun untuk melihat resep pribadi kamu.
+            <br><button onclick="openKodeModal()">Masukkan Kode</button>
+          </div>`;
+        document.getElementById('statsResepku').innerHTML = '';
+        document.getElementById('filterRow').innerHTML = '';
+        document.getElementById('footerRow').style.display = 'none';
+        document.getElementById('resultCount').textContent = '';
+        return;
+      }
+
+      const all = await rwLoad();
+      const q    = document.getElementById('dbSearch').value.toLowerCase().trim();
+      const sort = document.getElementById('sortSel').value;
+
+      // Stats
+      const merkCount = {};
+      all.forEach(e => { if (e.merk && e.merk !== '—') merkCount[e.merk] = (merkCount[e.merk]||0)+1; });
+      const topMerk = Object.entries(merkCount).sort((a,b) => b[1]-a[1])[0];
+      document.getElementById('statsResepku').innerHTML = all.length
+        ? `<span class="stat-chip"><span>${all.length}</span> racikan</span>
+           ${topMerk ? `<span class="stat-chip">⬤ <span>${topMerk[0]}</span></span>` : ''}
+           <span class="stat-chip"><span>${[...new Set(all.map(e=>e.nama))].length}</span> formula</span>`
+        : '';
+
+      buildFilters(all);
+
+      let arr = all.filter(e => {
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q)) return false;
+        if (activeFilter === 'premium' && e.quality !== 'premium') return false;
+        if (activeFilter === 'medium'  && e.quality !== 'medium')  return false;
+        if (activeFilter.startsWith('merk:') && e.merk !== activeFilter.slice(5)) return false;
+        return true;
+      });
+      arr = arr.sort((a, b) => {
+        if (sort === 'oldest')   return a.id - b.id;
+        if (sort === 'nama')     return a.nama.localeCompare(b.nama, 'id');
+        if (sort === 'vol-asc')  return a.vol - b.vol;
+        if (sort === 'vol-desc') return b.vol - a.vol;
+        return b.id - a.id;
+      });
+
+      const el = document.getElementById('dbList');
+      document.getElementById('footerRow').style.display = all.length ? 'flex' : 'none';
+      document.getElementById('resultCount').textContent =
+        arr.length === all.length ? `${all.length} racikan` : `${arr.length} dari ${all.length}`;
+
+      if (!all.length) {
+        el.innerHTML = `<div class="empty-state">
+          <div style="font-family:'Cormorant',serif;font-size:36px;color:var(--ink-4)">◌</div>
+          <p>Belum ada racikan tersimpan.</p>
+          <a href="index.html">Racik sekarang →</a>
+        </div>`;
+        return;
+      }
+      if (!arr.length) { el.innerHTML = '<div class="empty-state"><p>Tidak ditemukan.</p></div>'; return; }
+      el.innerHTML = groupMode ? renderGrouped(arr) : renderFlat(arr);
+    }
+
+    /* ── Alias render() → renderResepku() ── */
+    function render() { return renderResepku(); }
+
+    /* ── Flat list ── */
+    function renderFlat(arr) {
+      return arr.map(e => cardHTML(e)).join('');
+    }
+
+    /* ── Grouped by nama ── */
+    function renderGrouped(arr) {
+      const groups = {};
+      arr.forEach(e => {
+        if (!groups[e.nama]) groups[e.nama] = [];
+        groups[e.nama].push(e);
+      });
+      return Object.entries(groups).map(([nama, items]) => `
+        <div class="group-block">
+          <div class="group-header">
+            ${nama}
+            <span class="group-count">${items.length} varian</span>
+          </div>
+          ${items.map(e => cardHTML(e)).join('')}
+        </div>
+      `).join('');
+    }
+
+    /* ── Card HTML (Resep Saya) ── */
+    function cardHTML(e) {
+      const gc = e.quality === 'premium' ? 'premium' : 'medium';
+      const gl = e.quality === 'premium' ? 'Premium' : 'Medium';
+      const pubBtn = isOwnerCached
+        ? `<button class="btn-publish" onclick="publishToKatalog(${e.id})" title="Publikasikan ke katalog">Publik</button>`
+        : '';
+      return `
+        <div class="entry-card">
+          <div class="entry-vol">${e.vol}<em>ml</em></div>
+          <div class="entry-body">
+            <div class="entry-nama">${e.nama}</div>
+            <div class="entry-meta">
+              <span>${e.merk}</span>
+              <span class="entry-grade ${gc}">${gl}</span>
+              <span>${e.bibitPct}% bibit</span>
+              <span style="color:var(--ink-5)">${e.tanggal}</span>
+            </div>
+          </div>
+          <div class="entry-actions">
+            ${pubBtn}
+            <button class="btn-recall" onclick="recallEntry(${e.id})">Pakai</button>
+            <button class="btn-del" onclick="deleteEntry(${e.id})" title="Hapus">×</button>
+          </div>
+        </div>`;
+    }
+
+    /* ── Actions ── */
+    async function recallEntry(id) {
+      const all = await rwLoad();
+      const e = all.find(x => x.id === id);
+      if (!e) return;
+      const p = new URLSearchParams({ vol: e.vol, quality: e.quality, bibit: e.bibitPct, boost: e.boostPct });
+      window.location.href = 'index.html?' + p.toString();
+    }
+
+    async function deleteEntry(id) {
+      await rwDelete(id);
+      await render();
+    }
+
+    function toggleGroup() {
+      groupMode = !groupMode;
+      const btn = document.getElementById('groupBtn');
+      btn.classList.toggle('on', groupMode);
+      btn.textContent = groupMode ? '⊟ Flat list' : '⊞ Grup per nama';
+      render();
+    }
+
+    /* ── Export / Import ── */
+    async function exportJSON() {
+      const data = await rwLoad();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'parfumary-riwayat.json';
+      a.click();
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async e => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error();
+          const existing = await rwLoad();
+          const ids = new Set(existing.map(x => x.id));
+          for (const entry of imported.filter(x => !ids.has(x.id))) await rwSave(entry);
+          await render();
+        } catch { alert('File JSON tidak valid.'); }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ── Init ── */
+    (async function () {
+      const saved = localStorage.getItem('parfumary-theme');
+      setTheme(saved ?? 'light');
+
+      updateKodeBadge();
+
+      // Cek apakah owner
+      isOwnerCached = await checkIsOwner();
+      updateOwnerUI();
+
+      // Migrasi lama → D1 (jika ada kode)
+      await migrateToD1();
+
+      // Render tab aktif (default: katalog)
+      await renderKatalog();
+    })();
+  </script>
+</body>
+</html>
