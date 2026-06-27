@@ -564,8 +564,13 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .preset-card:hover { border-color: var(--border-lg); }
+    .preset-card:hover { border-color: var(--border-lg); background: var(--surface); }
     .preset-card:active { transform: scale(0.97); }
+    .preset-card.active {
+      border-color: var(--c-bibit);
+      background: var(--white);
+    }
+    .preset-card.active .p-name { color: var(--c-bibit); }
 
     .p-name {
       display: block;
@@ -1405,6 +1410,9 @@
       setHtml('dBibit', pct + '<em>%</em>');
       fill(sl);
       calc();
+      // Tandai card aktif
+      document.querySelectorAll('.preset-card').forEach(c => c.classList.remove('active'));
+      document.querySelector(`.preset-card[onclick="applyPreset('${key}')"]`)?.classList.add('active');
     }
 
     /* ── Update preset card labels sesuai kualitas aktif ── */

@@ -93,12 +93,14 @@ async function rwSave(entry) {
     const arr = localLoad(); arr.unshift(entry); localSave(arr); return;
   }
   try {
-    await fetch(API_RIWAYAT, {
+    const res = await fetch(API_RIWAYAT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...entry, kode }),
     });
-  } catch {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch (e) {
+    console.error('[Parfumary] rwSave gagal, fallback ke localStorage:', e.message);
     const arr = localLoad(); arr.unshift(entry); localSave(arr);
   }
 }
