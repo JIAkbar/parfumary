@@ -1696,7 +1696,7 @@
 
       const btn = document.querySelector('#saveForm .btn-primary');
       btn.disabled = true;
-      await rwSave(entry);
+      const ok = await rwSave(entry);
       btn.disabled = false;
 
       document.getElementById('saveNama').value = '';
@@ -1705,9 +1705,14 @@
       document.getElementById('saveCatatan').value = '';
       document.getElementById('rwSearch').value = '';
 
-      btn.textContent = '✓ Tersimpan';
-      btn.style.background = 'var(--c-pelarut)';
-      setTimeout(() => { btn.textContent = 'Simpan Racikan'; btn.style.background = ''; }, 1500);
+      if (ok) {
+        btn.textContent = '✓ Tersimpan';
+        btn.style.background = 'var(--c-pelarut)';
+      } else {
+        btn.textContent = '⚠ Tersimpan lokal saja';
+        btn.style.background = '#f59e0b';
+      }
+      setTimeout(() => { btn.textContent = 'Simpan Racikan'; btn.style.background = ''; }, 2000);
 
       await renderRiwayat();
     }

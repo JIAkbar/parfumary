@@ -90,7 +90,8 @@ async function rwLoad() {
 async function rwSave(entry) {
   const kode = getKode();
   if (!kode || !isOnline()) {
-    const arr = localLoad(); arr.unshift(entry); localSave(arr); return;
+    const arr = localLoad(); arr.unshift(entry); localSave(arr);
+    return true;
   }
   try {
     const res = await fetch(API_RIWAYAT, {
@@ -99,9 +100,11 @@ async function rwSave(entry) {
       body: JSON.stringify({ ...entry, kode }),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+    return true;
   } catch (e) {
     console.error('[Parfumary] rwSave gagal, fallback ke localStorage:', e.message);
     const arr = localLoad(); arr.unshift(entry); localSave(arr);
+    return false;
   }
 }
 
@@ -178,8 +181,8 @@ async function migrateToD1() {
   console.log(`[Parfumary] Migrasi ${local.length} entri → D1 (kode: ${kode})…`);
   let allOk = true;
   for (const entry of local) {
-    try { await rwSave(entry); }
-    catch { allOk = false; }
+    const ok = await rwSave(entry);
+    if (!ok) allOk = false;
   }
 
   if (allOk) {
