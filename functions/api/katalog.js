@@ -31,6 +31,7 @@ function normalizeRow(r) {
     boostMl:  r.boost_ml,
     pelMl:    r.pel_ml,
     catatan:  r.catatan ?? '',
+    catatanMerk: r.catatan_merk ?? '',
   };
 }
 
@@ -61,7 +62,7 @@ export async function onRequest({ request, env }) {
     catch { return json({ error: 'Body JSON tidak valid' }, 400); }
 
     const { id, nama, merk, vol, quality,
-            bibitPct, boostPct, bibitMl, boostMl, pelMl, catatan } = body;
+            bibitPct, boostPct, bibitMl, boostMl, pelMl, catatan, catatanMerk } = body;
 
     if (!id) return json({ error: 'id wajib' }, 400);
 
@@ -69,12 +70,12 @@ export async function onRequest({ request, env }) {
       .prepare(`
         INSERT OR REPLACE INTO katalog
           (id, nama, merk, vol, quality, bibit_pct, boost_pct,
-           bibit_ml, boost_ml, pel_ml, catatan, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           bibit_ml, boost_ml, pel_ml, catatan, catatan_merk, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(id, nama ?? 'Tanpa nama', merk ?? '—',
             vol, quality, bibitPct, boostPct, bibitMl, boostMl, pelMl,
-            catatan ?? '', id)
+            catatan ?? '', catatanMerk ?? '', id)
       .run();
 
     return json({ ok: true, id });

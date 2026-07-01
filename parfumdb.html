@@ -488,6 +488,10 @@
       font-size: 11px; color: var(--ink-4); margin-top: 2px;
       font-style: italic; line-height: 1.4;
     }
+    .entry-catatan-merk {
+      font-size: 11px; color: var(--c-boost); margin-top: 2px;
+      line-height: 1.4;
+    }
 
     /* ── Delete confirm modal ── */
     .del-overlay {
@@ -557,7 +561,7 @@
       <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
         <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()">
           <span class="kode-dot"></span>
-          <span id="kodeLabel">Masuk</span>
+          <span id="kodeLabel">Tersimpan di HP ini</span>
         </button>
         <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">☾</button>
       </div>
@@ -739,7 +743,13 @@
     function updateKodeBadge() {
       const kode = getKode();
       const badge = document.getElementById('kodeBadge');
-      document.getElementById('kodeLabel').textContent = kode ?? 'Masuk';
+      if (kode) {
+        document.getElementById('kodeLabel').textContent = '☁ ' + kode + ' · Tersinkron';
+        badge.title = 'Data tersinkron ke cloud — bisa dibuka dari HP/device lain dengan kode ini';
+      } else {
+        document.getElementById('kodeLabel').textContent = 'Tersimpan di HP ini';
+        badge.title = 'Belum ada kode akun — data hanya tersimpan di perangkat ini. Klik untuk masukkan kode.';
+      }
       badge.classList.toggle('has-kode', !!kode);
     }
     function updateOwnerUI() {
@@ -754,7 +764,7 @@
       const q    = document.getElementById('katalogSearch').value.toLowerCase().trim();
       const sort = document.getElementById('katalogSort').value;
       let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q) && !(e.catatanMerk || '').toLowerCase().includes(q)) return false;
         if (katalogFilter === 'premium' && e.quality !== 'premium') return false;
         if (katalogFilter === 'medium'  && e.quality !== 'medium')  return false;
         if (katalogFilter.startsWith('merk:') && e.merk !== katalogFilter.slice(5)) return false;
@@ -827,6 +837,7 @@
               <span>${e.merk}</span>
               <span class="entry-grade ${gc}">${gl}</span>
               <span>${e.bibitPct}% bibit</span>
+              ${e.catatanMerk ? `<span style="color:var(--c-boost)">🏷 ${e.catatanMerk}</span>` : ''}
               ${e.catatan ? `<span style="color:var(--ink-4);font-style:italic">${e.catatan}</span>` : ''}
             </div>
           </div>
@@ -896,7 +907,7 @@
       buildFilters(all);
 
       let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q) && !(e.catatanMerk || '').toLowerCase().includes(q)) return false;
         if (activeFilter === 'premium' && e.quality !== 'premium') return false;
         if (activeFilter === 'medium'  && e.quality !== 'medium')  return false;
         if (activeFilter.startsWith('merk:') && e.merk !== activeFilter.slice(5)) return false;
@@ -971,6 +982,7 @@
               <span>${e.bibitPct}% bibit</span>
               <span style="color:var(--ink-5)">${e.tanggal}</span>
             </div>
+            ${e.catatanMerk ? `<div class="entry-catatan-merk">🏷 ${e.catatanMerk}</div>` : ''}
             ${e.catatan ? `<div class="entry-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="entry-actions">

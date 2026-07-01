@@ -880,6 +880,11 @@
       font-style: italic; line-height: 1.4;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .riwayat-catatan-merk {
+      font-size: 11px; color: var(--c-boost); margin-top: 3px;
+      line-height: 1.4;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
     /* ─── Delete confirm modal ─── */
     .del-overlay {
@@ -1078,7 +1083,7 @@
       <div class="header-right">
       <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()" title="Kode akun">
         <span class="kode-dot"></span>
-        <span id="kodeLabel">Masuk</span>
+        <span id="kodeLabel">Tersimpan di HP ini</span>
       </button>
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle dark mode">
         <span id="themeIcon">☾</span>
@@ -1324,6 +1329,7 @@
             oninput="acFilter()" onfocus="acOpen()" onkeydown="acKey(event)">
           <div class="ac-drop" id="acDrop"></div>
         </div>
+        <input class="save-input" id="saveCatatanMerk" placeholder="Catatan merk (opsional)… mis. varian Elegance, botol emas" type="text" style="margin-top:8px;">
         <textarea class="save-input" id="saveCatatan" placeholder="Catatan (opsional)… mis. cocok untuk musim hujan" rows="2" style="resize:none;margin-top:8px;"></textarea>
         <div class="save-actions" style="margin-top:10px">
           <button class="btn-primary" onclick="confirmSave()">Simpan Racikan</button>
@@ -1620,12 +1626,13 @@
       const nama = document.getElementById('saveNama').value.trim() || 'Racikan tanpa nama';
       const merk = document.getElementById('saveMerk').value.trim() || '—';
       const catatan = document.getElementById('saveCatatan').value.trim();
+      const catatanMerk = document.getElementById('saveCatatanMerk').value.trim();
       const bibitMl = S.vol * (S.bibitPct / 100);
       const boostMl = bibitMl * (S.boostPct / 100);
       const entry = {
         id: Date.now(),
         tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-        nama, merk, catatan,
+        nama, merk, catatan, catatanMerk,
         vol: S.vol, quality: S.quality,
         bibitPct: S.bibitPct, boostPct: S.boostPct,
         bibitMl: +bibitMl.toFixed(2),
@@ -1640,6 +1647,7 @@
 
       document.getElementById('saveNama').value = '';
       document.getElementById('saveMerk').value = '';
+      document.getElementById('saveCatatanMerk').value = '';
       document.getElementById('saveCatatan').value = '';
       document.getElementById('rwSearch').value = '';
 
@@ -1707,7 +1715,8 @@
       const arr = q ? all.filter(e =>
         e.nama.toLowerCase().includes(q) ||
         e.merk.toLowerCase().includes(q) ||
-        (e.catatan || '').toLowerCase().includes(q)
+        (e.catatan || '').toLowerCase().includes(q) ||
+        (e.catatanMerk || '').toLowerCase().includes(q)
       ) : all;
       const el        = document.getElementById('riwayatList');
       const exportRow = document.getElementById('exportRow');
@@ -1736,6 +1745,7 @@
           <div class="riwayat-info">
             <div class="riwayat-nama">${e.nama}</div>
             <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; ${e.bibitPct}% &middot; ${e.vol}ml &middot; ${e.tanggal}</div>
+            ${e.catatanMerk ? `<div class="riwayat-catatan-merk">🏷 ${e.catatanMerk}</div>` : ''}
             ${e.catatan ? `<div class="riwayat-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="riwayat-vol">${e.vol}<span style="font-size:9px;color:var(--ink-5);margin-left:1px">ml</span></div>
@@ -1833,10 +1843,12 @@
       const label = document.getElementById('kodeLabel');
       if (kode) {
         badge.classList.add('has-kode');
-        label.textContent = kode;
+        label.textContent = '☁ ' + kode + ' · Tersinkron';
+        badge.title = 'Data tersinkron ke cloud — bisa dibuka dari HP/device lain dengan kode ini';
       } else {
         badge.classList.remove('has-kode');
-        label.textContent = 'Masuk';
+        label.textContent = 'Tersimpan di HP ini';
+        badge.title = 'Belum ada kode akun — data hanya tersimpan di perangkat ini, tidak tersinkron. Klik untuk masukkan kode.';
       }
     }
 

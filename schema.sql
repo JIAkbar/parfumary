@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS katalog (
   boost_ml    REAL    NOT NULL,
   pel_ml      REAL    NOT NULL,
   catatan     TEXT    DEFAULT '',
+  catatan_merk TEXT   DEFAULT '',
   created_at  INTEGER NOT NULL
 );
 
@@ -32,7 +33,12 @@ CREATE TABLE IF NOT EXISTS racikan (
   pel_ml      REAL    NOT NULL,
   tanggal     TEXT    NOT NULL,
   catatan     TEXT    DEFAULT '',
+  catatan_merk TEXT   DEFAULT '',
   created_at  INTEGER NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_racikan_kode ON racikan(kode, created_at DESC);
+
+-- Migrasi kolom baru (idempotent-ish; abaikan error "duplicate column" jika sudah ada)
+-- ALTER TABLE racikan ADD COLUMN catatan_merk TEXT DEFAULT '';
+-- ALTER TABLE katalog ADD COLUMN catatan_merk TEXT DEFAULT '';
