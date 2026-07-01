@@ -790,8 +790,8 @@
       const kode = getKode();
       const badge = document.getElementById('kodeBadge');
       if (kode) {
-        document.getElementById('kodeLabel').textContent = '☁ ' + kode + ' · Tersinkron';
-        badge.title = 'Data tersinkron ke cloud — bisa dibuka dari HP/device lain dengan kode ini';
+        document.getElementById('kodeLabel').textContent = '☁ Tersinkron';
+        badge.title = 'Kode akun: ' + kode + ' — data tersinkron ke cloud, bisa dibuka dari HP/device lain dengan kode ini';
       } else {
         document.getElementById('kodeLabel').textContent = 'Tersimpan di HP ini';
         badge.title = 'Belum ada kode akun — data hanya tersimpan di perangkat ini. Klik untuk masukkan kode.';

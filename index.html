@@ -597,23 +597,28 @@
 
     .preset-card {
       background: var(--white);
-      border: none;
+      border: 1.5px solid transparent;
       border-radius: var(--radius-card);
       padding: 14px 15px 12px;
       cursor: pointer;
       text-align: left;
       box-shadow: var(--shadow-card);
-      transition: border-color 0.18s;
+      transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .preset-card:hover { border-color: var(--border-lg); background: var(--surface); }
-    .preset-card:active { transform: scale(0.97); }
+    .preset-card:hover {
+      border-color: var(--c-bibit);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-float);
+    }
+    .preset-card:active { transform: scale(0.97) translateY(0); }
     .preset-card.active {
       border-color: var(--c-bibit);
-      background: var(--white);
+      background: var(--wash-warm);
     }
     .preset-card.active .p-name { color: var(--c-bibit); }
+    .preset-card.active .p-desc { color: var(--c-bibit); opacity: 0.75; }
 
     .p-name {
       display: block;
@@ -1893,8 +1898,8 @@
       const label = document.getElementById('kodeLabel');
       if (kode) {
         badge.classList.add('has-kode');
-        label.textContent = '☁ ' + kode + ' · Tersinkron';
-        badge.title = 'Data tersinkron ke cloud — bisa dibuka dari HP/device lain dengan kode ini';
+        label.textContent = '☁ Tersinkron';
+        badge.title = 'Kode akun: ' + kode + ' — data tersinkron ke cloud, bisa dibuka dari HP/device lain dengan kode ini';
       } else {
         badge.classList.remove('has-kode');
         label.textContent = 'Tersimpan di HP ini';
