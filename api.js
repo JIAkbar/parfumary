@@ -160,16 +160,33 @@ async function katalogDelete(id) {
 
 /* ═══════════════════════════════════════════════
    MIGRASI localStorage → D1
+   Catatan: flag "sudah migrasi" disimpan PER KODE AKUN
+   (bukan sekali untuk seluruh device) — supaya kalau device yang
+   sama dipakai gonta-ganti kode akun, migrasi tetap jalan untuk
+   kode yang belum pernah dimigrasikan datanya.
 ══════════════════════════════════════════════ */
 async function migrateToD1() {
-  if (!isOnline() || !getKode()) return;
-  if (localStorage.getItem(MIGRATED_KEY)) return;
-  const local = localLoad();
-  if (!local.length) { localStorage.setItem(MIGRATED_KEY, '1'); return; }
+  const kode = getKode();
+  if (!isOnline() || !kode) return;
 
-  console.log(`[Parfumary] Migrasi ${local.length} entri → D1…`);
-  for (const entry of local) await rwSave(entry).catch(() => {});
-  localStorage.removeItem(LOCAL_KEY);
-  localStorage.setItem(MIGRATED_KEY, '1');
-  console.log('[Parfumary] Migrasi selesai.');
+  const migratedFlagKey = MIGRATED_KEY + ':' + kode;
+  if (localStorage.getItem(migratedFlagKey)) return;
+
+  const local = localLoad();
+  if (!local.length) { localStorage.setItem(migratedFlagKey, '1'); return; }
+
+  console.log(`[Parfumary] Migrasi ${local.length} entri → D1 (kode: ${kode})…`);
+  let allOk = true;
+  for (const entry of local) {
+    try { await rwSave(entry); }
+    catch { allOk = false; }
+  }
+
+  if (allOk) {
+    localStorage.removeItem(LOCAL_KEY);
+    localStorage.setItem(migratedFlagKey, '1');
+    console.log('[Parfumary] Migrasi selesai.');
+  } else {
+    console.warn('[Parfumary] Sebagian entri gagal dimigrasikan, akan dicoba lagi nanti.');
+  }
 }

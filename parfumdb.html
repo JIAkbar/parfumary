@@ -380,7 +380,7 @@
       border: none;
       border-radius: var(--radius);
       padding: 14px 16px;
-      margin-bottom: 10px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -660,7 +660,7 @@
       </div>
       <div id="dbList"></div>
       <div class="footer-row" id="footerRow" style="display:none">
-        <button class="btn-ghost" onclick="exportJSON()">↓ Export JSON</button>
+        <button class="btn-ghost" id="exportBtn" onclick="exportJSON()">↓ Export JSON</button>
         <label class="btn-ghost">↑ Import JSON
           <input type="file" accept=".json" onchange="importJSON(event)" style="display:none">
         </label>
@@ -969,7 +969,8 @@
       });
 
       const el = document.getElementById('dbList');
-      document.getElementById('footerRow').style.display = all.length ? 'flex' : 'none';
+      document.getElementById('footerRow').style.display = 'flex';
+      document.getElementById('exportBtn').style.display = all.length ? '' : 'none';
       document.getElementById('resultCount').textContent =
         arr.length === all.length ? `${all.length} racikan` : `${arr.length} dari ${all.length}`;
 
