@@ -89,12 +89,17 @@ export async function onRequest({ request, env }) {
     const id  = url.searchParams.get('id');
     if (!id) return json({ error: 'id wajib' }, 400);
 
-    await env.DB
+    const result = await env.DB
       .prepare('DELETE FROM katalog WHERE id = ?')
-      .bind(id)
+      .bind(Number(id))
       .run();
 
-    return json({ ok: true });
+    const deleted = result.meta?.changes ?? 0;
+    if (deleted === 0) {
+      return json({ ok: false, error: 'Entri tidak ditemukan' }, 404);
+    }
+
+    return json({ ok: true, deleted });
   }
 
   return json({ error: 'Method not allowed' }, 405);

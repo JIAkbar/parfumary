@@ -108,12 +108,16 @@ async function rwSave(entry) {
 async function rwDelete(id) {
   const kode = getKode();
   if (!kode || !isOnline()) {
-    localSave(localLoad().filter(x => x.id !== id)); return;
+    localSave(localLoad().filter(x => x.id !== id));
+    return true;
   }
   try {
-    await fetch(`${API_RIWAYAT}?id=${id}&kode=${encodeURIComponent(kode)}`, { method: 'DELETE' });
-  } catch {
-    localSave(localLoad().filter(x => x.id !== id));
+    const res = await fetch(`${API_RIWAYAT}?id=${id}&kode=${encodeURIComponent(kode)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return true;
+  } catch (e) {
+    console.error('[Parfumary] rwDelete gagal:', e.message);
+    return false;
   }
 }
 
@@ -141,10 +145,17 @@ async function katalogSave(entry) {
 
 async function katalogDelete(id) {
   const kode = getKode();
-  await fetch(`${API_KATALOG}?id=${id}`, {
-    method: 'DELETE',
-    headers: { 'X-Owner-Key': kode ?? '' },
-  });
+  try {
+    const res = await fetch(`${API_KATALOG}?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'X-Owner-Key': kode ?? '' },
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return true;
+  } catch (e) {
+    console.error('[Parfumary] katalogDelete gagal:', e.message);
+    return false;
+  }
 }
 
 /* ═══════════════════════════════════════════════

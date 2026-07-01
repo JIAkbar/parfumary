@@ -87,12 +87,17 @@ export async function onRequest({ request, env }) {
     const id   = url.searchParams.get('id');
     if (!kode || !id) return json({ error: 'kode & id wajib' }, 400);
 
-    await env.DB
+    const result = await env.DB
       .prepare('DELETE FROM racikan WHERE id = ? AND kode = ?')
-      .bind(id, kode)
+      .bind(Number(id), kode)
       .run();
 
-    return json({ ok: true });
+    const deleted = result.meta?.changes ?? 0;
+    if (deleted === 0) {
+      return json({ ok: false, error: 'Entri tidak ditemukan (id/kode tidak cocok)' }, 404);
+    }
+
+    return json({ ok: true, deleted });
   }
 
   return json({ error: 'Method not allowed' }, 405);
