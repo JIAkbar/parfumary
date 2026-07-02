@@ -656,7 +656,7 @@
       <div class="filter-row" id="filterRow"></div>
       <div class="view-row">
         <span class="result-count" id="resultCount"></span>
-        <button class="group-toggle" id="groupBtn" onclick="toggleGroup()">⊞ Grup per nama</button>
+        <button class="group-toggle" id="groupBtn" onclick="toggleGroup()">⊞ Grup per merk</button>
       </div>
       <div id="dbList"></div>
       <div class="footer-row" id="footerRow" style="display:none">
@@ -678,6 +678,26 @@
     let katalogFilter = 'semua';
     let pendingDeleteId = null;
     let pendingDeleteType = null; // 'entry' or 'katalog'
+
+    /* ── Sama seperti index.html — dipakai untuk turunkan preset & badge booster ── */
+    const PRESET_PCT = {
+      premium: { cologne: 8,  edt: 13, edp: 20, extrait: 30 },
+      medium:  { cologne: 12, edt: 19, edp: 29, extrait: 44 },
+    };
+    const PRESET_LABELS = { cologne: 'Cologne', edt: 'EDT', edp: 'EDP', extrait: 'Extrait' };
+
+    function inferPreset(quality, bibitPct) {
+      const table = PRESET_PCT[quality] || {};
+      return Object.keys(table).find(k => table[k] === bibitPct) || null;
+    }
+    function presetLabel(key) {
+      return key ? PRESET_LABELS[key] : 'Custom';
+    }
+    function boosterBadge(e) {
+      if (!e.boostPct || e.boostPct <= 0) return '';
+      const drops = Math.round(e.boostMl * 20); // 1 ml = 20 tetes
+      return `🏷 Booster ${drops < 1 ? '&lt; 1' : '~' + drops} tetes`;
+    }
 
     function openDelModal(id, type) {
       pendingDeleteId = id;
@@ -810,7 +830,7 @@
       const q    = document.getElementById('katalogSearch').value.toLowerCase().trim();
       const sort = document.getElementById('katalogSort').value;
       let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q) && !(e.catatanMerk || '').toLowerCase().includes(q)) return false;
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
         if (katalogFilter === 'premium' && e.quality !== 'premium') return false;
         if (katalogFilter === 'medium'  && e.quality !== 'medium')  return false;
         if (katalogFilter.startsWith('merk:') && e.merk !== katalogFilter.slice(5)) return false;
@@ -882,8 +902,8 @@
             <div class="entry-meta">
               <span>${e.merk}</span>
               <span class="entry-grade ${gc}">${gl}</span>
-              <span>${e.bibitPct}% bibit</span>
-              ${e.catatanMerk ? `<span style="color:var(--c-boost)">🏷 ${e.catatanMerk}</span>` : ''}
+              <span>${e.bibitPct}% bibit &middot; ${presetLabel(inferPreset(e.quality, e.bibitPct))}</span>
+              ${boosterBadge(e) ? `<span style="color:var(--c-boost)">${boosterBadge(e)}</span>` : ''}
               ${e.catatan ? `<span style="color:var(--ink-4);font-style:italic">${e.catatan}</span>` : ''}
             </div>
           </div>
@@ -954,7 +974,7 @@
       buildFilters(all);
 
       let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q) && !(e.catatanMerk || '').toLowerCase().includes(q)) return false;
+        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
         if (activeFilter === 'premium' && e.quality !== 'premium') return false;
         if (activeFilter === 'medium'  && e.quality !== 'medium')  return false;
         if (activeFilter.startsWith('merk:') && e.merk !== activeFilter.slice(5)) return false;
@@ -994,18 +1014,19 @@
       return arr.map(e => cardHTML(e)).join('');
     }
 
-    /* ── Grouped by nama ── */
+    /* ── Grouped by merk ── */
     function renderGrouped(arr) {
       const groups = {};
       arr.forEach(e => {
-        if (!groups[e.nama]) groups[e.nama] = [];
-        groups[e.nama].push(e);
+        const key = e.merk && e.merk !== '—' ? e.merk : 'Tanpa merk';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(e);
       });
-      return Object.entries(groups).map(([nama, items]) => `
+      return Object.entries(groups).map(([merk, items]) => `
         <div class="group-block">
           <div class="group-header">
-            ${nama}
-            <span class="group-count">${items.length} varian</span>
+            ${merk}
+            <span class="group-count">${items.length} racikan</span>
           </div>
           ${items.map(e => cardHTML(e)).join('')}
         </div>
@@ -1027,10 +1048,10 @@
             <div class="entry-meta">
               <span>${e.merk}</span>
               <span class="entry-grade ${gc}">${gl}</span>
-              <span>${e.bibitPct}% bibit</span>
+              <span>${e.bibitPct}% bibit &middot; ${presetLabel(inferPreset(e.quality, e.bibitPct))}</span>
               <span style="color:var(--ink-5)">${e.tanggal}</span>
             </div>
-            ${e.catatanMerk ? `<div class="entry-catatan-merk">🏷 ${e.catatanMerk}</div>` : ''}
+            ${boosterBadge(e) ? `<div class="entry-catatan-merk">${boosterBadge(e)}</div>` : ''}
             ${e.catatan ? `<div class="entry-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="entry-actions">
@@ -1064,7 +1085,7 @@
       groupMode = !groupMode;
       const btn = document.getElementById('groupBtn');
       btn.classList.toggle('on', groupMode);
-      btn.textContent = groupMode ? '⊟ Flat list' : '⊞ Grup per nama';
+      btn.textContent = groupMode ? '⊟ Flat list' : '⊞ Grup per merk';
       render();
     }
 

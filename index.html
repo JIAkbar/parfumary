@@ -1295,7 +1295,7 @@
           <span class="sl-val" id="dBoost">1.0<em>%</em></span>
         </div>
         <input type="range" id="slBoost"
-          min="1" max="500" value="100" step="1"
+          min="0" max="500" value="100" step="1"
           oninput="onSlider(this,'boost')">
         <div class="sl-hint" id="hBoost">ringan 0.5% · standar 1–2% · tahan lama 3–5%</div>
       </div>
@@ -1383,7 +1383,6 @@
             oninput="acFilter()" onfocus="acOpen()" onkeydown="acKey(event)">
           <div class="ac-drop" id="acDrop"></div>
         </div>
-        <input class="save-input" id="saveCatatanMerk" placeholder="Catatan merk (opsional)… mis. varian Elegance, botol emas" type="text" style="margin-top:8px;">
         <textarea class="save-input" id="saveCatatan" placeholder="Catatan (opsional)… mis. cocok untuk musim hujan" rows="2" style="resize:none;margin-top:8px;"></textarea>
         <div class="save-actions" style="margin-top:10px">
           <button class="btn-primary" onclick="confirmSave()">Simpan Racikan</button>
@@ -1424,6 +1423,24 @@
       premium: { cologne: 8,  edt: 13, edp: 20, extrait: 30 },
       medium:  { cologne: 12, edt: 19, edp: 29, extrait: 44 },
     };
+
+    const PRESET_LABELS = { cologne: 'Cologne', edt: 'EDT', edp: 'EDP', extrait: 'Extrait' };
+
+    /* ── Turunkan preset asal dari bibitPct tersimpan (tanpa kolom DB baru) ── */
+    function inferPreset(quality, bibitPct) {
+      const table = PRESET_PCT[quality] || {};
+      return Object.keys(table).find(k => table[k] === bibitPct) || null;
+    }
+    function presetLabel(key) {
+      return key ? PRESET_LABELS[key] : 'Custom';
+    }
+
+    /* ── Badge booster otomatis dari boostMl/boostPct tersimpan ── */
+    function boosterBadge(e) {
+      if (!e.boostPct || e.boostPct <= 0) return '';
+      const drops = Math.round(e.boostMl * DROPS_PER_ML);
+      return `🏷 Booster ${drops < 1 ? '&lt; 1' : '~' + drops} tetes`;
+    }
 
     const DROPS_PER_ML = 20;
     const MICRO_ML     = 0.05;
@@ -1553,9 +1570,12 @@
       /* Booster */
       const bd = boostMl < 0.1 ? fmt(boostMl, 3) : (boostMl < 1 ? fmt(boostMl, 2) : fmt(boostMl, 1));
       setHtml('rBoost', bd + '<span class="f-unit"> ml</span>');
-      setText('subBoost', pctStr(S.boostPct) + '% dari bibit');
+      setText('subBoost', S.boostPct === 0 ? 'Tanpa booster' : pctStr(S.boostPct) + '% dari bibit');
 
-      if (boostMl < MICRO_ML) {
+      if (S.boostPct === 0) {
+        setText('rDrops', '0 tetes');
+        show('rWarn', false);
+      } else if (boostMl < MICRO_ML) {
         setText('rDrops', '< 1 tetes');
         show('rWarn', true);
       } else {
@@ -1680,13 +1700,12 @@
       const nama = document.getElementById('saveNama').value.trim() || 'Racikan tanpa nama';
       const merk = document.getElementById('saveMerk').value.trim() || '—';
       const catatan = document.getElementById('saveCatatan').value.trim();
-      const catatanMerk = document.getElementById('saveCatatanMerk').value.trim();
       const bibitMl = S.vol * (S.bibitPct / 100);
       const boostMl = bibitMl * (S.boostPct / 100);
       const entry = {
         id: Date.now(),
         tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-        nama, merk, catatan, catatanMerk,
+        nama, merk, catatan,
         vol: S.vol, quality: S.quality,
         bibitPct: S.bibitPct, boostPct: S.boostPct,
         bibitMl: +bibitMl.toFixed(2),
@@ -1701,7 +1720,6 @@
 
       document.getElementById('saveNama').value = '';
       document.getElementById('saveMerk').value = '';
-      document.getElementById('saveCatatanMerk').value = '';
       document.getElementById('saveCatatan').value = '';
       document.getElementById('rwSearch').value = '';
 
@@ -1775,8 +1793,7 @@
       const arr = q ? all.filter(e =>
         e.nama.toLowerCase().includes(q) ||
         e.merk.toLowerCase().includes(q) ||
-        (e.catatan || '').toLowerCase().includes(q) ||
-        (e.catatanMerk || '').toLowerCase().includes(q)
+        (e.catatan || '').toLowerCase().includes(q)
       ) : all;
       const el        = document.getElementById('riwayatList');
       const exportRow = document.getElementById('exportRow');
@@ -1804,8 +1821,8 @@
         <div class="riwayat-card" onclick="recallRiwayat(${e.id})">
           <div class="riwayat-info">
             <div class="riwayat-nama">${e.nama}</div>
-            <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; ${e.bibitPct}% &middot; ${e.vol}ml &middot; ${e.tanggal}</div>
-            ${e.catatanMerk ? `<div class="riwayat-catatan-merk">🏷 ${e.catatanMerk}</div>` : ''}
+            <div class="riwayat-meta">${e.merk} &middot; ${e.quality} &middot; ${e.bibitPct}% &middot; ${presetLabel(inferPreset(e.quality, e.bibitPct))} &middot; ${e.tanggal}</div>
+            ${boosterBadge(e) ? `<div class="riwayat-catatan-merk">${boosterBadge(e)}</div>` : ''}
             ${e.catatan ? `<div class="riwayat-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="riwayat-vol">${e.vol}<span style="font-size:9px;color:var(--ink-5);margin-left:1px">ml</span></div>
