@@ -1,11 +1,12 @@
 name       = "parfumary"
 pages_build_output_dir = "."
 
-# OWNER_KEY: kode rahasia untuk akses admin katalog
-# Ganti nilai ini dengan kode yang kamu mau, lalu set sebagai secret di CF Pages dashboard
-# CF Pages dashboard → Settings → Environment variables → Add secret OWNER_KEY
-[vars]
-OWNER_KEY = "GANTI_KODE_OWNER_DI_CF_DASHBOARD"
+# OWNER_KEY TIDAK didefinisikan di sini secara sengaja — kalau ada di [vars]
+# (plaintext, ikut ke git), Cloudflare mengunci nama itu jadi tidak bisa
+# di-set sebagai Secret via dashboard. Tambahkan OWNER_KEY sebagai SECRET
+# langsung di CF Pages dashboard → Settings → Environment variables → Add
+# secret. Untuk dev lokal, isi di file .dev.vars (gitignored, lihat
+# .dev.vars.example).
 
 [[d1_databases]]
 binding      = "DB"          # env.DB di dalam Worker

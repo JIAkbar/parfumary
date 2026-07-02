@@ -1,2 +1,5 @@
 # Context file untuk sesi Claude — tidak perlu publik
 CLAUDE.md
+
+# Secret lokal (OWNER_KEY dev) — jangan pernah commit
+.dev.vars

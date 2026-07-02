@@ -1,0 +1,3 @@
+# Salin file ini jadi .dev.vars (gitignored) untuk testing lokal dengan
+# `wrangler pages dev`. JANGAN pernah commit .dev.vars yang asli.
+OWNER_KEY=ganti-dengan-password-owner-lokal
