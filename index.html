@@ -981,7 +981,7 @@
     }
     .kode-modal-overlay.open { opacity: 1; pointer-events: auto; }
     .kode-modal {
-      background: var(--surface);
+      background: var(--surface-solid);
       border: 0.5px solid var(--border-lg);
       border-radius: var(--radius-card);
       padding: 28px 24px;
@@ -1000,7 +1000,7 @@
     }
     .kode-input {
       flex: 1;
-      background: var(--bg); border: 0.5px solid var(--border-md);
+      background: var(--bg); border: 1px solid var(--border-lg);
       border-radius: var(--radius-input); padding: 10px 14px;
       font-family: 'DM Mono', monospace; font-size: 14px;
       color: var(--ink); letter-spacing: 0.08em;
@@ -1921,7 +1921,7 @@
 
     function initTheme() {
       const saved = localStorage.getItem('parfumary-theme');
-      setTheme(saved ?? 'dark');
+      setTheme(saved ?? 'light');
     }
 
     /* ── Kode akun modal ── */
