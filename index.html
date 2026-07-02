@@ -15,6 +15,7 @@
     :root {
       --bg:        #eef1f5;
       --surface:   rgba(255,255,255,0.55);
+      --surface-solid: #f5f5f7;
       --white:     rgba(255,255,255,0.72);
       --border:    rgba(0, 0, 0, 0.06);
       --border-md: rgba(0, 0, 0, 0.10);
@@ -40,6 +41,7 @@
     [data-theme="dark"] {
       --bg:        #1c1c1e;
       --surface:   rgba(44,44,46,0.6);
+      --surface-solid: #2c2c2e;
       --white:     rgba(58,58,60,0.65);
       --border:    rgba(255, 255, 255, 0.08);
       --border-md: rgba(255, 255, 255, 0.13);
@@ -780,7 +782,7 @@
       position: absolute;
       left: 0; right: 0;
       top: calc(100% + 4px);
-      background: var(--surface);
+      background: var(--surface-solid);
       border: 0.5px solid var(--border-lg);
       border-radius: var(--radius-card);
       max-height: 230px;
@@ -1200,7 +1202,9 @@
     <div class="sec a d1">
       <div class="sec-label">Kapasitas Botol</div>
       <div class="pill-row">
+        <button class="pill" onclick="pickSize(5,this)">5 ml</button>
         <button class="pill" onclick="pickSize(10,this)">10 ml</button>
+        <button class="pill" onclick="pickSize(15,this)">15 ml</button>
         <button class="pill" onclick="pickSize(20,this)">20 ml</button>
         <button class="pill active" onclick="pickSize(30,this)">30 ml</button>
         <button class="pill" onclick="pickSize(50,this)">50 ml</button>
