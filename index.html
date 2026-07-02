@@ -105,8 +105,10 @@
     .header {
       padding: 54px 0 44px;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: flex-start;
+      row-gap: 12px;
       animation: rise 0.65s cubic-bezier(0.22,1,0.36,1) both;
     }
 
@@ -1050,9 +1052,12 @@
 
     .header-right {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 12px;
+      justify-content: flex-end;
+      gap: 8px 12px;
       padding-top: 6px;
+      max-width: 100%;
     }
 
     /* smooth theme transition */
@@ -1425,7 +1430,7 @@
     </div>
 
     <footer>
-      Parfumary · v1.2 ·
+      Parfumary · v2.0 ·
       <a href="parfumdb.html" style="color:var(--ink-4);text-decoration:none;border-bottom:0.5px solid var(--border-md)">Database Racikan →</a>
     </footer>
 

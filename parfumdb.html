@@ -113,8 +113,10 @@
     .header {
       padding: 48px 0 32px;
       display: flex;
+      flex-wrap: wrap;
       align-items: flex-start;
       justify-content: space-between;
+      row-gap: 12px;
     }
     .header-left { display: flex; flex-direction: column; gap: 4px; }
     .header-back {
@@ -621,7 +623,7 @@
         <div class="header-title">Resep Saya</div>
         <div class="header-sub" id="ownerBadgeWrap">Parfumary</div>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 10px;margin-top:4px;max-width:100%;">
         <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()">
           <span class="kode-dot"></span>
           <span id="kodeLabel">Masukkan kode akun</span>
