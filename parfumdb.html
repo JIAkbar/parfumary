@@ -1030,8 +1030,8 @@
     }
 
     async function doDeleteKatalog(id) {
-      const ok = await katalogDelete(id);
-      if (!ok) await showAlert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.', 'Gagal Menghapus');
+      const result = await katalogDelete(id);
+      if (!result.ok) await showAlert(writeErrorMessage(result, 'menghapus'), 'Gagal Menghapus');
       katalogCache = await katalogLoad(); // refresh cache
       renderKatalog();
     }
@@ -1041,9 +1041,13 @@
       const e = all.find(x => x.id === id);
       if (!e) return;
       const catatan = prompt('Catatan untuk katalog (opsional):') ?? '';
-      await katalogSave({ ...e, catatan });
+      const result = await katalogSave({ ...e, catatan });
       katalogCache = []; // clear cache
-      await showAlert('Resep berhasil dipublikasikan ke katalog!', 'Berhasil');
+      if (result.ok) {
+        await showAlert('Resep berhasil dipublikasikan ke katalog!', 'Berhasil');
+      } else {
+        await showAlert(writeErrorMessage(result, 'publikasi'), 'Gagal Publikasi');
+      }
     }
 
     /* ── Resep saya (personal) ── */
@@ -1181,8 +1185,8 @@
     }
 
     async function doDeleteEntry(id) {
-      const ok = await rwDelete(id);
-      if (!ok) await showAlert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.', 'Gagal Menghapus');
+      const result = await rwDelete(id);
+      if (!result.ok) await showAlert(writeErrorMessage(result, 'menghapus'), 'Gagal Menghapus');
       await render();
     }
 

@@ -1757,7 +1757,7 @@
 
       const btn = document.querySelector('#saveForm .btn-primary');
       btn.disabled = true;
-      const ok = await rwSave(entry);
+      const result = await rwSave(entry);
       btn.disabled = false;
 
       document.getElementById('saveNama').value = '';
@@ -1765,12 +1765,13 @@
       document.getElementById('saveCatatan').value = '';
       document.getElementById('rwSearch').value = '';
 
-      if (ok) {
+      if (result.ok) {
         btn.textContent = '✓ Tersimpan';
         btn.style.background = 'var(--c-pelarut)';
       } else {
-        btn.textContent = '✗ Gagal tersimpan — coba lagi';
+        btn.textContent = '✗ Gagal tersimpan';
         btn.style.background = '#dc2626';
+        await showAlert(writeErrorMessage(result, 'menyimpan'), 'Gagal Menyimpan');
       }
       setTimeout(() => { btn.textContent = 'Simpan Racikan'; btn.style.background = ''; }, 2000);
 
@@ -1825,8 +1826,8 @@
     }
 
     async function deleteRiwayat(id) {
-      const ok = await rwDelete(id);
-      if (!ok) await showAlert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.', 'Gagal Menghapus');
+      const result = await rwDelete(id);
+      if (!result.ok) await showAlert(writeErrorMessage(result, 'menghapus'), 'Gagal Menghapus');
       await renderRiwayat();
     }
 

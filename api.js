@@ -89,36 +89,61 @@ async function rwLoad() {
   }
 }
 
+/* Hasil operasi tulis: { ok, status, reason } — status 0 berarti request
+   tidak sampai ke server sama sekali (network/offline), bukan ditolak
+   server. reason dipakai UI untuk pesan yang akurat, bukan generik. */
+function writeResult(ok, status = 0) {
+  let reason = 'ok';
+  if (!ok) {
+    if (status === 0) reason = 'network';
+    else if (status === 401) reason = 'unauthorized';
+    else reason = 'server';
+  }
+  return { ok, status, reason };
+}
+
+/* Pesan error yang akurat sesuai alasan gagal — dipakai UI, bukan pesan
+   generik "cek koneksi" untuk semua kasus. */
+function writeErrorMessage(result, actionWord = 'menyimpan') {
+  if (result.reason === 'unauthorized') {
+    return `Ditolak — aktifkan Mode Owner dulu untuk ${actionWord} racikan ini.`;
+  }
+  if (result.reason === 'server') {
+    return `Gagal ${actionWord} — server error (HTTP ${result.status}). Coba lagi nanti.`;
+  }
+  return `Gagal ${actionWord} — cek koneksi internet, lalu coba lagi.`;
+}
+
 async function rwSave(entry) {
   const kode = getKode();
-  if (!kode) return false;
+  if (!kode) return writeResult(false, 0);
   try {
     const res = await fetch(API_RIWAYAT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Owner-Key': getOwnerPassword() },
       body: JSON.stringify({ ...entry, kode }),
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return true;
+    if (!res.ok) { console.error('[Parfumary] rwSave gagal: HTTP', res.status); return writeResult(false, res.status); }
+    return writeResult(true, res.status);
   } catch (e) {
-    console.error('[Parfumary] rwSave gagal:', e.message);
-    return false;
+    console.error('[Parfumary] rwSave gagal (network):', e.message);
+    return writeResult(false, 0);
   }
 }
 
 async function rwDelete(id) {
   const kode = getKode();
-  if (!kode) return false;
+  if (!kode) return writeResult(false, 0);
   try {
     const res = await fetch(`${API_RIWAYAT}?id=${id}&kode=${encodeURIComponent(kode)}`, {
       method: 'DELETE',
       headers: { 'X-Owner-Key': getOwnerPassword() },
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return true;
+    if (!res.ok) { console.error('[Parfumary] rwDelete gagal: HTTP', res.status); return writeResult(false, res.status); }
+    return writeResult(true, res.status);
   } catch (e) {
-    console.error('[Parfumary] rwDelete gagal:', e.message);
-    return false;
+    console.error('[Parfumary] rwDelete gagal (network):', e.message);
+    return writeResult(false, 0);
   }
 }
 
@@ -135,11 +160,18 @@ async function katalogLoad() {
 }
 
 async function katalogSave(entry) {
-  await fetch(API_KATALOG, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Owner-Key': getOwnerPassword() },
-    body: JSON.stringify(entry),
-  });
+  try {
+    const res = await fetch(API_KATALOG, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Owner-Key': getOwnerPassword() },
+      body: JSON.stringify(entry),
+    });
+    if (!res.ok) { console.error('[Parfumary] katalogSave gagal: HTTP', res.status); return writeResult(false, res.status); }
+    return writeResult(true, res.status);
+  } catch (e) {
+    console.error('[Parfumary] katalogSave gagal (network):', e.message);
+    return writeResult(false, 0);
+  }
 }
 
 async function katalogDelete(id) {
@@ -148,10 +180,10 @@ async function katalogDelete(id) {
       method: 'DELETE',
       headers: { 'X-Owner-Key': getOwnerPassword() },
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return true;
+    if (!res.ok) { console.error('[Parfumary] katalogDelete gagal: HTTP', res.status); return writeResult(false, res.status); }
+    return writeResult(true, res.status);
   } catch (e) {
-    console.error('[Parfumary] katalogDelete gagal:', e.message);
-    return false;
+    console.error('[Parfumary] katalogDelete gagal (network):', e.message);
+    return writeResult(false, 0);
   }
 }
