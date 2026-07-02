@@ -370,8 +370,8 @@
       background: var(--white);
       border: none;
       border-radius: var(--radius);
-      padding: 16px 18px;
-      margin-bottom: 16px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -398,15 +398,19 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
     .entry-meta {
       font-size: 11px;
       color: var(--ink-4);
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      row-gap: 8px;
+      column-gap: 8px;
       align-items: center;
+    }
+    .entry-tanggal {
+      font-size: 11px; color: var(--ink-5); margin-top: 6px;
     }
     .entry-grade {
       font-size: 9px;
@@ -517,11 +521,11 @@
 
     /* ── Entry catatan ── */
     .entry-catatan {
-      font-size: 11px; color: var(--ink-4); margin-top: 6px;
+      font-size: 11px; color: var(--ink-4); margin-top: 8px;
       font-style: italic; line-height: 1.4;
     }
     .entry-catatan-merk {
-      font-size: 11px; color: var(--c-boost); margin-top: 6px;
+      font-size: 11px; color: var(--c-boost); margin-top: 8px;
       line-height: 1.4;
     }
 
@@ -974,11 +978,10 @@
           <div class="entry-body">
             <div class="entry-nama">${e.nama}</div>
             <div class="entry-meta">
-              <span>${e.merk}</span>
               <span class="entry-grade ${gc}">${gl}</span>
-              <span>${e.bibitPct}% bibit &middot; ${presetLabel(inferPreset(e.quality, e.bibitPct))}</span>
-              <span style="color:var(--ink-5)">${e.tanggal}</span>
+              <span>${e.merk} &middot; ${e.bibitPct}% bibit &middot; ${presetLabel(inferPreset(e.quality, e.bibitPct))}</span>
             </div>
+            <div class="entry-tanggal">${e.tanggal}</div>
             ${boosterBadge(e) ? `<div class="entry-catatan-merk">${boosterBadge(e)}</div>` : ''}
             ${e.catatan ? `<div class="entry-catatan">${e.catatan}</div>` : ''}
           </div>
