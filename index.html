@@ -864,13 +864,13 @@
       border-radius: var(--radius-card);
     }
 
-    .riwayat-list { display: flex; flex-direction: column; gap: 14px; }
+    .riwayat-list { display: flex; flex-direction: column; gap: 16px; }
 
     .riwayat-card {
       background: var(--white);
       border: none;
       border-radius: var(--radius-card);
-      padding: 14px 16px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -898,7 +898,7 @@
       font-family: 'DM Mono', monospace;
       font-size: 9px;
       color: var(--ink-4);
-      margin-top: 5px;
+      margin-top: 6px;
       letter-spacing: 0.04em;
       line-height: 1.5;
     }
@@ -927,12 +927,12 @@
     .riwayat-del:hover { color: #a03030; }
 
     .riwayat-catatan {
-      font-size: 11px; color: var(--ink-4); margin-top: 3px;
+      font-size: 11px; color: var(--ink-4); margin-top: 6px;
       font-style: italic; line-height: 1.4;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .riwayat-catatan-merk {
-      font-size: 11px; color: var(--c-boost); margin-top: 3px;
+      font-size: 11px; color: var(--c-boost); margin-top: 6px;
       line-height: 1.4;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
@@ -1961,6 +1961,13 @@
 
     /* ── Mode Owner modal ── */
     function openOwnerModal() {
+      if (isOwnerUnlocked()) {
+        if (confirm('Keluar dari Mode Owner? Racikan jadi lihat-saja lagi.')) {
+          lockOwner();
+          updateOwnerBadge();
+        }
+        return;
+      }
       document.getElementById('ownerInput').value = '';
       document.getElementById('ownerModalHint').style.display = 'none';
       document.getElementById('ownerOverlay').classList.add('open');
