@@ -2,11 +2,13 @@
  * Parfumary — Cloudflare Pages Function
  * Route: /api/verify-owner
  *
- * POST /api/verify-owner   body: { kode: "xxx" }
+ * POST /api/verify-owner   body: { ownerPassword: "xxx" }
  * → { isOwner: true/false }
  *
- * Digunakan frontend untuk cek apakah kode yang dimasukkan adalah kode owner.
- * OWNER_KEY diset sebagai secret di CF Pages dashboard (tidak di-expose ke client).
+ * Password Owner TERPISAH dari kode akun — supaya kode akun ("JIA99") bisa
+ * dibagikan bebas untuk lihat racikan (read-only), tanpa membuka akses
+ * tulis/hapus. OWNER_KEY diset sebagai secret di CF Pages dashboard (tidak
+ * di-expose ke client), nilainya harus BEDA dari kode akun manapun.
  */
 
 const CORS = {
@@ -28,11 +30,11 @@ export async function onRequest({ request, env }) {
   try { body = await request.json(); }
   catch { return json({ error: 'Body tidak valid' }, 400); }
 
-  const { kode } = body;
+  const { ownerPassword } = body;
   const ownerKey = env.OWNER_KEY ?? '';
 
-  // Tidak boleh jika owner key kosong atau kode kosong
-  if (!kode || !ownerKey) return json({ isOwner: false });
+  // Tidak boleh jika owner key kosong atau password kosong
+  if (!ownerPassword || !ownerKey) return json({ isOwner: false });
 
-  return json({ isOwner: kode === ownerKey });
+  return json({ isOwner: ownerPassword === ownerKey });
 }

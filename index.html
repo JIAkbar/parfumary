@@ -1121,6 +1121,25 @@
     </div>
   </div>
 
+  <!-- ── Mode Owner modal (password terpisah dari kode akun) ── -->
+  <div class="kode-modal-overlay" id="ownerOverlay" onclick="closeOwnerModal(event)">
+    <div class="kode-modal">
+      <div class="kode-modal-title">Mode Owner</div>
+      <div class="kode-modal-desc">Kode akun ini dilindungi — masukkan password Owner untuk bisa simpan/hapus racikan. Tanpa ini, racikan hanya bisa dilihat.</div>
+      <div class="kode-input-wrap">
+        <input class="kode-input" id="ownerInput" type="password"
+          placeholder="Password Owner"
+          autocomplete="off"
+          onkeydown="if(event.key==='Enter')submitOwnerModal()">
+      </div>
+      <div class="kode-modal-actions">
+        <button class="btn-primary" onclick="submitOwnerModal()">Buka Mode Owner</button>
+        <button class="btn-ghost" onclick="closeOwnerModal()">Batal</button>
+      </div>
+      <div id="ownerModalHint" style="font-size:11px;color:var(--ink-5);display:none;text-align:center;"></div>
+    </div>
+  </div>
+
   <div class="container">
 
     <!-- ── Header ── -->
@@ -1137,7 +1156,10 @@
       <div class="header-right">
       <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()" title="Kode akun">
         <span class="kode-dot"></span>
-        <span id="kodeLabel">Tersimpan di HP ini</span>
+        <span id="kodeLabel">Masukkan kode akun</span>
+      </button>
+      <button class="kode-badge" id="ownerBadge" onclick="openOwnerModal()" title="Mode Owner" style="display:none">
+        <span id="ownerLabel">🔓 Mode Owner</span>
       </button>
       <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle dark mode">
         <span id="themeIcon">☾</span>
@@ -1697,6 +1719,9 @@
     }
 
     async function confirmSave() {
+      if (!getKode()) { openKodeModal(); return; }
+      if (!canWrite()) { openOwnerModal(); return; }
+
       const nama = document.getElementById('saveNama').value.trim() || 'Racikan tanpa nama';
       const merk = document.getElementById('saveMerk').value.trim() || '—';
       const catatan = document.getElementById('saveCatatan').value.trim();
@@ -1727,8 +1752,8 @@
         btn.textContent = '✓ Tersimpan';
         btn.style.background = 'var(--c-pelarut)';
       } else {
-        btn.textContent = '⚠ Tersimpan lokal saja';
-        btn.style.background = '#f59e0b';
+        btn.textContent = '✗ Gagal tersimpan — coba lagi';
+        btn.style.background = '#dc2626';
       }
       setTimeout(() => { btn.textContent = 'Simpan Racikan'; btn.style.background = ''; }, 2000);
 
@@ -1769,6 +1794,7 @@
     let pendingDeleteId = null;
 
     function openDelModal(id) {
+      if (!canWrite()) { openOwnerModal(); return; }
       pendingDeleteId = id;
       document.getElementById('delOverlay').classList.add('open');
       document.getElementById('delConfirmBtn').onclick = async () => {
@@ -1904,13 +1930,12 @@
       const val = document.getElementById('kodeInput').value.trim();
       if (!val) {
         clearKode();
-        updateKodeBadge();
-        renderRiwayat();
       } else {
         setKode(val);
-        updateKodeBadge();
-        migrateToD1().then(() => renderRiwayat());
       }
+      updateKodeBadge();
+      updateOwnerBadge();
+      renderRiwayat();
       document.getElementById('kodeOverlay').classList.remove('open');
     }
 
@@ -1924,18 +1949,52 @@
         badge.title = 'Kode akun: ' + kode + ' — data tersinkron ke cloud, bisa dibuka dari HP/device lain dengan kode ini';
       } else {
         badge.classList.remove('has-kode');
-        label.textContent = 'Tersimpan di HP ini';
-        badge.title = 'Belum ada kode akun — data hanya tersimpan di perangkat ini, tidak tersinkron. Klik untuk masukkan kode.';
+        label.textContent = 'Masukkan kode akun';
+        badge.title = 'Wajib isi kode akun untuk simpan/lihat racikan (tidak ada mode offline). Klik untuk masukkan kode.';
       }
+    }
+
+    /* ── Mode Owner modal ── */
+    function openOwnerModal() {
+      document.getElementById('ownerInput').value = '';
+      document.getElementById('ownerModalHint').style.display = 'none';
+      document.getElementById('ownerOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('ownerInput').focus(), 50);
+    }
+    function closeOwnerModal(e) {
+      if (e && e.target !== document.getElementById('ownerOverlay')) return;
+      document.getElementById('ownerOverlay').classList.remove('open');
+    }
+    async function submitOwnerModal() {
+      const pw = document.getElementById('ownerInput').value;
+      const ok = await unlockOwner(pw);
+      if (ok) {
+        updateOwnerBadge();
+        document.getElementById('ownerOverlay').classList.remove('open');
+      } else {
+        const hint = document.getElementById('ownerModalHint');
+        hint.textContent = 'Password salah';
+        hint.style.display = 'block';
+      }
+    }
+    function updateOwnerBadge() {
+      const badge = document.getElementById('ownerBadge');
+      const label = document.getElementById('ownerLabel');
+      if (!isProtectedKode()) {
+        badge.style.display = 'none';
+        return;
+      }
+      badge.style.display = '';
+      label.textContent = isOwnerUnlocked() ? '🔓 Mode Owner aktif' : '🔒 Mode lihat saja';
     }
 
     /* ── Init ── */
     (function () {
       initTheme();
       updateKodeBadge();
+      updateOwnerBadge();
 
-      // Muat riwayat (localStorage jika tanpa kode, D1 jika ada kode)
-      migrateToD1().then(() => renderRiwayat());
+      renderRiwayat();
 
       // Recall dari parfumdb via URL params
       const p = new URLSearchParams(location.search);

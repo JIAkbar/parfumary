@@ -590,6 +590,23 @@
     </div>
   </div>
 
+  <!-- ── Mode Owner modal (password terpisah dari kode akun) ── -->
+  <div class="kode-modal-overlay" id="ownerOverlay" onclick="closeOwnerModal(event)">
+    <div class="kode-modal">
+      <div class="kode-modal-title">Mode Owner</div>
+      <div class="kode-modal-desc">Kode akun ini dilindungi — masukkan password Owner untuk bisa simpan/hapus racikan. Tanpa ini, racikan hanya bisa dilihat.</div>
+      <input class="kode-input" id="ownerInput" type="password"
+        placeholder="Password Owner"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter')submitOwnerModal()">
+      <div class="kode-modal-actions">
+        <button class="btn-ghost" onclick="submitOwnerModal()">Buka Mode Owner</button>
+        <button class="btn-ghost" onclick="closeOwnerModal()">Batal</button>
+      </div>
+      <div id="ownerModalHint" style="font-size:11px;color:var(--ink-5);display:none;text-align:center;"></div>
+    </div>
+  </div>
+
   <div class="container">
 
     <!-- ── Header ── -->
@@ -607,7 +624,10 @@
       <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
         <button class="kode-badge" id="kodeBadge" onclick="openKodeModal()">
           <span class="kode-dot"></span>
-          <span id="kodeLabel">Tersimpan di HP ini</span>
+          <span id="kodeLabel">Masukkan kode akun</span>
+        </button>
+        <button class="kode-badge" id="ownerBadge" onclick="openOwnerModal()" style="display:none">
+          <span id="ownerBtnLabel">🔓 Mode Owner</span>
         </button>
         <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">☾</button>
       </div>
@@ -799,10 +819,11 @@
         clearKode();
       } else {
         setKode(val);
-        isOwnerCached = await checkIsOwner();
-        updateOwnerUI();
       }
+      isOwnerCached = isOwnerUnlocked();
+      updateOwnerUI();
       updateKodeBadge();
+      updateOwnerBadge();
       document.getElementById('kodeOverlay').classList.remove('open');
       if (activeTab === 'resepku') renderResepku();
     }
@@ -813,8 +834,8 @@
         document.getElementById('kodeLabel').textContent = '☁ Tersinkron';
         badge.title = 'Kode akun: ' + kode + ' — data tersinkron ke cloud, bisa dibuka dari HP/device lain dengan kode ini';
       } else {
-        document.getElementById('kodeLabel').textContent = 'Tersimpan di HP ini';
-        badge.title = 'Belum ada kode akun — data hanya tersimpan di perangkat ini. Klik untuk masukkan kode.';
+        document.getElementById('kodeLabel').textContent = 'Masukkan kode akun';
+        badge.title = 'Wajib isi kode akun untuk simpan/lihat racikan (tidak ada mode offline). Klik untuk masukkan kode.';
       }
       badge.classList.toggle('has-kode', !!kode);
     }
@@ -823,6 +844,43 @@
       wrap.innerHTML = isOwnerCached
         ? 'Parfumary &nbsp;<span class="owner-badge">⬤ Owner</span>'
         : 'Parfumary';
+    }
+
+    /* ── Mode Owner modal ── */
+    function openOwnerModal() {
+      document.getElementById('ownerInput').value = '';
+      document.getElementById('ownerModalHint').style.display = 'none';
+      document.getElementById('ownerOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('ownerInput').focus(), 50);
+    }
+    function closeOwnerModal(e) {
+      if (e && e.target !== document.getElementById('ownerOverlay')) return;
+      document.getElementById('ownerOverlay').classList.remove('open');
+    }
+    async function submitOwnerModal() {
+      const pw = document.getElementById('ownerInput').value;
+      const ok = await unlockOwner(pw);
+      if (ok) {
+        isOwnerCached = true;
+        updateOwnerUI();
+        updateOwnerBadge();
+        document.getElementById('ownerOverlay').classList.remove('open');
+        if (activeTab === 'resepku') renderResepku(); else renderKatalog();
+      } else {
+        const hint = document.getElementById('ownerModalHint');
+        hint.textContent = 'Password salah';
+        hint.style.display = 'block';
+      }
+    }
+    function updateOwnerBadge() {
+      const badge = document.getElementById('ownerBadge');
+      const label = document.getElementById('ownerBtnLabel');
+      if (!isProtectedKode()) {
+        badge.style.display = 'none';
+        return;
+      }
+      badge.style.display = '';
+      label.textContent = isOwnerUnlocked() ? '🔓 Mode Owner aktif' : '🔒 Mode lihat saja';
     }
 
     /* ── Katalog helpers ── */
@@ -1072,6 +1130,7 @@
     }
 
     function deleteEntry(id) {
+      if (!canWrite()) { openOwnerModal(); return; }
       openDelModal(id, 'entry');
     }
 
@@ -1123,12 +1182,10 @@
 
       updateKodeBadge();
 
-      // Cek apakah owner
-      isOwnerCached = await checkIsOwner();
+      // Mode Owner (password terpisah, dicek dari cache sesi)
+      isOwnerCached = isOwnerUnlocked();
       updateOwnerUI();
-
-      // Migrasi lama → D1 (jika ada kode)
-      await migrateToD1();
+      updateOwnerBadge();
 
       // Langsung render Resep Saya
       await renderResepku();

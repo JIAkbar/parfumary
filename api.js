@@ -1,23 +1,27 @@
 /**
- * Parfumary — API Layer v3
+ * Parfumary — API Layer v4
  *
  * Auth: Kode Akun (teks bebas, disimpan di localStorage)
  *   - Kode = identitas user di D1, lintas device
- *   - Tanpa kode → data tersimpan lokal saja (localStorage)
- *   - Owner check → via /api/verify-owner (server-side)
+ *   - Wajib online + kode akun untuk simpan/lihat racikan — tidak ada lagi
+ *     fallback localStorage
+ *   - Owner check → Mode Owner terpisah (password beda dari kode akun),
+ *     lihat unlockOwner()/isOwnerUnlocked()
  *
  * Tier akses:
- *   Tamu        → pakai kalkulator, lihat katalog (baca saja)
- *   User (kode) → + simpan resep pribadi ke D1, cross-device
- *   Owner       → + tambah/hapus katalog publik
+ *   Tamu        → pakai kalkulator, lihat katalog & racikan siapapun yang
+ *                 kodenya diketahui (baca saja)
+ *   User (kode) → + simpan/hapus racikan pribadi miliknya sendiri
+ *   Owner       → kode akun OWNER_KODE ("JIA99") + Mode Owner aktif →
+ *                 bisa simpan/hapus racikan OWNER_KODE + kelola Katalog
  */
 
-const KODE_KEY     = 'parfumary-kode';
-const LOCAL_KEY    = 'parfumary-riwayat';
-const MIGRATED_KEY = 'parfumary-migrated-d1';
-const OWNER_KEY    = 'parfumary-is-owner';   // cache status owner (session)
-const API_RIWAYAT  = '/api/riwayat';
-const API_KATALOG  = '/api/katalog';
+const KODE_KEY      = 'parfumary-kode';
+const OWNER_KODE    = 'JIA99';                 // kode akun yang datanya dilindungi
+const OWNER_PW_KEY  = 'parfumary-owner-pw';    // cache password Owner (session, per tab)
+const API_RIWAYAT   = '/api/riwayat';
+const API_KATALOG   = '/api/katalog';
+const API_VERIFY_OWNER = '/api/verify-owner';
 
 /* ── Kode Akun ───────────────────────────────── */
 function getKode() {
@@ -25,97 +29,91 @@ function getKode() {
 }
 function setKode(k) {
   localStorage.setItem(KODE_KEY, k.trim());
-  sessionStorage.removeItem(OWNER_KEY); // reset cache owner
+  lockOwner(); // ganti kode akun → Mode Owner ikut terkunci lagi
 }
 function clearKode() {
   localStorage.removeItem(KODE_KEY);
-  sessionStorage.removeItem(OWNER_KEY);
+  lockOwner();
 }
 
-/* ── Owner check ─────────────────────────────── */
-async function checkIsOwner() {
-  // Cek cache sesi dulu (hindari request berulang)
-  const cached = sessionStorage.getItem(OWNER_KEY);
-  if (cached !== null) return cached === '1';
-
-  const kode = getKode();
-  if (!kode || !isOnline()) { sessionStorage.setItem(OWNER_KEY, '0'); return false; }
-
+/* ── Mode Owner (password terpisah dari kode akun) ───────── */
+function isProtectedKode(kode = getKode()) {
+  return kode === OWNER_KODE;
+}
+function isOwnerUnlocked() {
+  return !!sessionStorage.getItem(OWNER_PW_KEY);
+}
+function getOwnerPassword() {
+  return sessionStorage.getItem(OWNER_PW_KEY) ?? '';
+}
+function lockOwner() {
+  sessionStorage.removeItem(OWNER_PW_KEY);
+}
+async function unlockOwner(password) {
   try {
-    const res = await fetch('/api/verify-owner', {
+    const res = await fetch(API_VERIFY_OWNER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kode }),
+      body: JSON.stringify({ ownerPassword: password }),
     });
     const data = await res.json();
-    const result = data.isOwner === true;
-    sessionStorage.setItem(OWNER_KEY, result ? '1' : '0');
-    return result;
+    if (data.isOwner === true) {
+      sessionStorage.setItem(OWNER_PW_KEY, password);
+      return true;
+    }
+    return false;
   } catch {
-    sessionStorage.setItem(OWNER_KEY, '0');
     return false;
   }
 }
-
-/* ── Cek apakah API tersedia ─────────────────── */
-function isOnline() {
-  return location.protocol !== 'file:' && navigator.onLine !== false;
-}
-
-/* ── Fallback localStorage ───────────────────── */
-function localLoad() {
-  try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || []; }
-  catch { return []; }
-}
-function localSave(arr) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(arr));
+/* true kalau kode akun aktif BUKAN kode yang dilindungi (bebas tulis), atau
+   kode yang dilindungi TAPI Mode Owner sudah aktif */
+function canWrite() {
+  return !isProtectedKode() || isOwnerUnlocked();
 }
 
 /* ═══════════════════════════════════════════════
-   RESEP PRIBADI (per kode akun)
+   RESEP PRIBADI (per kode akun) — wajib online
 ══════════════════════════════════════════════ */
 
 async function rwLoad() {
   const kode = getKode();
-  if (!kode || !isOnline()) return localLoad();
+  if (!kode) return [];
   try {
     const res = await fetch(`${API_RIWAYAT}?kode=${encodeURIComponent(kode)}`);
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     return await res.json();
-  } catch {
-    return localLoad();
+  } catch (e) {
+    console.error('[Parfumary] rwLoad gagal:', e.message);
+    return [];
   }
 }
 
 async function rwSave(entry) {
   const kode = getKode();
-  if (!kode || !isOnline()) {
-    const arr = localLoad(); arr.unshift(entry); localSave(arr);
-    return true;
-  }
+  if (!kode) return false;
   try {
     const res = await fetch(API_RIWAYAT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Owner-Key': getOwnerPassword() },
       body: JSON.stringify({ ...entry, kode }),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return true;
   } catch (e) {
-    console.error('[Parfumary] rwSave gagal, fallback ke localStorage:', e.message);
-    const arr = localLoad(); arr.unshift(entry); localSave(arr);
+    console.error('[Parfumary] rwSave gagal:', e.message);
     return false;
   }
 }
 
 async function rwDelete(id) {
   const kode = getKode();
-  if (!kode || !isOnline()) {
-    localSave(localLoad().filter(x => x.id !== id));
-    return true;
-  }
+  if (!kode) return false;
   try {
-    const res = await fetch(`${API_RIWAYAT}?id=${id}&kode=${encodeURIComponent(kode)}`, { method: 'DELETE' });
+    const res = await fetch(`${API_RIWAYAT}?id=${id}&kode=${encodeURIComponent(kode)}`, {
+      method: 'DELETE',
+      headers: { 'X-Owner-Key': getOwnerPassword() },
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return true;
   } catch (e) {
@@ -129,7 +127,6 @@ async function rwDelete(id) {
 ══════════════════════════════════════════════ */
 
 async function katalogLoad() {
-  if (!isOnline()) return [];
   try {
     const res = await fetch(API_KATALOG);
     if (!res.ok) throw new Error();
@@ -138,58 +135,23 @@ async function katalogLoad() {
 }
 
 async function katalogSave(entry) {
-  const kode = getKode();
   await fetch(API_KATALOG, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Owner-Key': kode ?? '' },
+    headers: { 'Content-Type': 'application/json', 'X-Owner-Key': getOwnerPassword() },
     body: JSON.stringify(entry),
   });
 }
 
 async function katalogDelete(id) {
-  const kode = getKode();
   try {
     const res = await fetch(`${API_KATALOG}?id=${id}`, {
       method: 'DELETE',
-      headers: { 'X-Owner-Key': kode ?? '' },
+      headers: { 'X-Owner-Key': getOwnerPassword() },
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return true;
   } catch (e) {
     console.error('[Parfumary] katalogDelete gagal:', e.message);
     return false;
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   MIGRASI localStorage → D1
-   Catatan: flag "sudah migrasi" disimpan PER KODE AKUN
-   (bukan sekali untuk seluruh device) — supaya kalau device yang
-   sama dipakai gonta-ganti kode akun, migrasi tetap jalan untuk
-   kode yang belum pernah dimigrasikan datanya.
-══════════════════════════════════════════════ */
-async function migrateToD1() {
-  const kode = getKode();
-  if (!isOnline() || !kode) return;
-
-  const migratedFlagKey = MIGRATED_KEY + ':' + kode;
-  if (localStorage.getItem(migratedFlagKey)) return;
-
-  const local = localLoad();
-  if (!local.length) { localStorage.setItem(migratedFlagKey, '1'); return; }
-
-  console.log(`[Parfumary] Migrasi ${local.length} entri → D1 (kode: ${kode})…`);
-  let allOk = true;
-  for (const entry of local) {
-    const ok = await rwSave(entry);
-    if (!ok) allOk = false;
-  }
-
-  if (allOk) {
-    localStorage.removeItem(LOCAL_KEY);
-    localStorage.setItem(migratedFlagKey, '1');
-    console.log('[Parfumary] Migrasi selesai.');
-  } else {
-    console.warn('[Parfumary] Sebagian entri gagal dimigrasikan, akan dicoba lagi nanti.');
   }
 }
