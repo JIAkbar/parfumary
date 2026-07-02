@@ -230,19 +230,6 @@
       border: none;
       border-radius: var(--radius-pill); padding: 3px 8px;
     }
-    .btn-publish {
-      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--c-pelarut); background: none;
-      border: 0.5px solid var(--border-md);
-      border-radius: var(--radius-pill); padding: 3px 8px;
-      cursor: pointer; white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .btn-publish:hover { background: var(--wash-cool); }
-    .katalog-empty {
-      text-align: center; padding: 40px 20px;
-      color: var(--ink-4); font-size: 13px; line-height: 2;
-    }
     .kode-prompt {
       text-align: center; padding: 32px 20px;
       color: var(--ink-4); font-size: 13px; line-height: 2;
@@ -647,28 +634,6 @@
       </div>
     </div>
 
-    <!-- Tab Katalog disembunyikan — cukup Resep Saya -->
-
-    <!-- ── Section Katalog (hidden) ── -->
-    <div id="sectionKatalog" style="display:none">
-      <div class="stats-bar" id="statsKatalog"></div>
-      <div class="toolbar">
-        <div class="search-wrap">
-          <span class="search-icon">⌕</span>
-          <input class="search-input" id="katalogSearch" type="search"
-            placeholder="Cari nama atau merk…" oninput="renderKatalog()">
-        </div>
-        <select class="sort-sel" id="katalogSort" onchange="renderKatalog()">
-          <option value="newest">Terbaru</option>
-          <option value="oldest">Terlama</option>
-          <option value="nama">Nama A–Z</option>
-          <option value="vol-asc">Volume ↑</option>
-          <option value="vol-desc">Volume ↓</option>
-        </select>
-      </div>
-      <div class="filter-row" id="katalogFilters"></div>
-      <div id="katalogList"></div>
-    </div>
 
     <!-- ── Section Resep Saya ── -->
     <div id="sectionResepku">
@@ -706,12 +671,7 @@
   <script>
     let groupMode = false;
     let activeFilter = 'semua';
-    let activeTab = 'resepku';
     let isOwnerCached = false;
-    let katalogCache = [];
-    let katalogFilter = 'semua';
-    let pendingDeleteId = null;
-    let pendingDeleteType = null; // 'entry' or 'katalog'
 
     /* ── Sama seperti index.html — dipakai untuk turunkan preset & badge booster ── */
     const PRESET_PCT = {
@@ -733,23 +693,15 @@
       return `🏷 Booster ${drops < 1 ? '&lt; 1' : '~' + drops} tetes`;
     }
 
-    function openDelModal(id, type) {
-      pendingDeleteId = id;
-      pendingDeleteType = type;
+    function openDelModal(id) {
       document.getElementById('delOverlay').classList.add('open');
       document.getElementById('delConfirmBtn').onclick = async () => {
         closeDelModal();
-        if (pendingDeleteType === 'katalog') {
-          await doDeleteKatalog(pendingDeleteId);
-        } else {
-          await doDeleteEntry(pendingDeleteId);
-        }
+        await doDeleteEntry(id);
       };
     }
     function closeDelModal() {
       document.getElementById('delOverlay').classList.remove('open');
-      pendingDeleteId = null;
-      pendingDeleteType = null;
     }
 
     /* ── Theme ── */
@@ -800,17 +752,6 @@
       `;
     }
 
-    /* ── Tab switch ── */
-    function switchTab(tab) {
-      activeTab = tab;
-      document.getElementById('tabKatalog').classList.toggle('active', tab === 'katalog');
-      document.getElementById('tabResepku').classList.toggle('active', tab === 'resepku');
-      document.getElementById('sectionKatalog').style.display = tab === 'katalog' ? '' : 'none';
-      document.getElementById('sectionResepku').style.display = tab === 'resepku' ? '' : 'none';
-      if (tab === 'katalog') renderKatalog();
-      else renderResepku();
-    }
-
     /* ── Kode akun modal ── */
     function openKodeModal() {
       const existing = getKode();
@@ -839,7 +780,7 @@
       updateKodeBadge();
       updateOwnerBadge();
       document.getElementById('kodeOverlay').classList.remove('open');
-      if (activeTab === 'resepku') renderResepku();
+      renderResepku();
     }
     function updateKodeBadge() {
       const kode = getKode();
@@ -890,7 +831,7 @@
           isOwnerCached = false;
           updateOwnerUI();
           updateOwnerBadge();
-          if (activeTab === 'resepku') renderResepku(); else renderKatalog();
+          renderResepku();
         }
         return;
       }
@@ -911,7 +852,7 @@
         updateOwnerUI();
         updateOwnerBadge();
         document.getElementById('ownerOverlay').classList.remove('open');
-        if (activeTab === 'resepku') renderResepku(); else renderKatalog();
+        renderResepku();
       } else {
         const hint = document.getElementById('ownerModalHint');
         hint.textContent = 'Password salah';
@@ -929,126 +870,6 @@
       label.textContent = isOwnerUnlocked() ? '🔓 Mode Owner aktif' : '🔒 Mode lihat saja';
     }
 
-    /* ── Katalog helpers ── */
-    function filterSortKatalog(all) {
-      const q    = document.getElementById('katalogSearch').value.toLowerCase().trim();
-      const sort = document.getElementById('katalogSort').value;
-      let arr = all.filter(e => {
-        if (q && !e.nama.toLowerCase().includes(q) && !e.merk.toLowerCase().includes(q) && !(e.catatan || '').toLowerCase().includes(q)) return false;
-        if (katalogFilter === 'premium' && e.quality !== 'premium') return false;
-        if (katalogFilter === 'medium'  && e.quality !== 'medium')  return false;
-        if (katalogFilter.startsWith('merk:') && e.merk !== katalogFilter.slice(5)) return false;
-        return true;
-      });
-      return arr.sort((a, b) => {
-        if (sort === 'oldest')   return a.id - b.id;
-        if (sort === 'nama')     return a.nama.localeCompare(b.nama, 'id');
-        if (sort === 'vol-asc')  return a.vol - b.vol;
-        if (sort === 'vol-desc') return b.vol - a.vol;
-        return b.id - a.id;
-      });
-    }
-
-    function buildKatalogFilters(all) {
-      const merks = [...new Set(all.map(e => e.merk).filter(m => m && m !== '—'))].sort();
-      const chips = [
-        { val: 'semua', label: 'Semua' },
-        { val: 'premium', label: 'Premium' },
-        { val: 'medium', label: 'Medium' },
-        ...merks.slice(0, 5).map(m => ({ val: 'merk:' + m, label: m })),
-      ];
-      document.getElementById('katalogFilters').innerHTML = chips.map(c =>
-        `<span class="filter-chip ${katalogFilter === c.val ? 'active' : ''}"
-          onclick="setKatalogFilter('${c.val.replace(/'/g,"\\'")}')">
-          ${c.label}</span>`
-      ).join('');
-    }
-
-    function setKatalogFilter(val) { katalogFilter = val; renderKatalog(); }
-
-    async function renderKatalog() {
-      const all = katalogCache.length ? katalogCache : (katalogCache = await katalogLoad());
-      const arr = filterSortKatalog(all);
-      buildKatalogFilters(all);
-
-      // Stats
-      const merkCount = {};
-      all.forEach(e => { if (e.merk && e.merk !== '—') merkCount[e.merk] = (merkCount[e.merk]||0)+1; });
-      const topMerk = Object.entries(merkCount).sort((a,b) => b[1]-a[1])[0];
-      document.getElementById('statsKatalog').innerHTML = all.length
-        ? `<span class="stat-chip"><span>${all.length}</span> resep</span>
-           ${topMerk ? `<span class="stat-chip">⬤ <span>${topMerk[0]}</span></span>` : ''}
-           ${isOwnerCached ? '<span class="stat-chip owner-badge">⬤ Owner mode</span>' : ''}`
-        : '';
-
-      const el = document.getElementById('katalogList');
-      if (!all.length) {
-        el.innerHTML = isOwnerCached
-          ? '<div class="katalog-empty">Belum ada resep di katalog.<br>Publikasikan dari tab <strong>Resep Saya</strong>.</div>'
-          : '<div class="katalog-empty">Katalog masih kosong.</div>';
-        return;
-      }
-      if (!arr.length) { el.innerHTML = '<div class="katalog-empty">Tidak ditemukan.</div>'; return; }
-      el.innerHTML = arr.map(e => katalogCardHTML(e)).join('');
-    }
-
-    function katalogCardHTML(e) {
-      const gc = e.quality === 'premium' ? 'premium' : 'medium';
-      const gl = e.quality === 'premium' ? 'Premium' : 'Medium';
-      const ownerBtns = isOwnerCached
-        ? `<button class="btn-del" onclick="deleteKatalogEntry(${e.id})" title="Hapus dari katalog">×</button>`
-        : '';
-      return `
-        <div class="entry-card">
-          <div class="entry-vol">${e.vol}<em>ml</em></div>
-          <div class="entry-body">
-            <div class="entry-nama">${e.nama}</div>
-            <div class="entry-meta">
-              <span>${e.merk}</span>
-              <span class="entry-grade ${gc}">${gl}</span>
-              <span>${e.bibitPct}% bibit &middot; ${presetLabel(inferPreset(e.quality, e.bibitPct))}</span>
-              ${boosterBadge(e) ? `<span style="color:var(--c-boost)">${boosterBadge(e)}</span>` : ''}
-              ${e.catatan ? `<span style="color:var(--ink-4);font-style:italic">${e.catatan}</span>` : ''}
-            </div>
-          </div>
-          <div class="entry-actions">
-            <button class="btn-recall" onclick="recallKatalogEntry(${e.id})">Salin</button>
-            ${ownerBtns}
-          </div>
-        </div>`;
-    }
-
-    function recallKatalogEntry(id) {
-      const e = katalogCache.find(x => x.id === id);
-      if (!e) return;
-      const p = new URLSearchParams({ vol: e.vol, quality: e.quality, bibit: e.bibitPct, boost: e.boostPct });
-      window.location.href = 'index.html?' + p.toString();
-    }
-
-    function deleteKatalogEntry(id) {
-      openDelModal(id, 'katalog');
-    }
-
-    async function doDeleteKatalog(id) {
-      const result = await katalogDelete(id);
-      if (!result.ok) await showAlert(writeErrorMessage(result, 'menghapus'), 'Gagal Menghapus');
-      katalogCache = await katalogLoad(); // refresh cache
-      renderKatalog();
-    }
-
-    async function publishToKatalog(id) {
-      const all = await rwLoad();
-      const e = all.find(x => x.id === id);
-      if (!e) return;
-      const catatan = prompt('Catatan untuk katalog (opsional):') ?? '';
-      const result = await katalogSave({ ...e, catatan });
-      katalogCache = []; // clear cache
-      if (result.ok) {
-        await showAlert('Resep berhasil dipublikasikan ke katalog!', 'Berhasil');
-      } else {
-        await showAlert(writeErrorMessage(result, 'publikasi'), 'Gagal Publikasi');
-      }
-    }
 
     /* ── Resep saya (personal) ── */
     async function renderResepku() {
@@ -1145,9 +966,6 @@
     function cardHTML(e) {
       const gc = e.quality === 'premium' ? 'premium' : 'medium';
       const gl = e.quality === 'premium' ? 'Premium' : 'Medium';
-      const pubBtn = isOwnerCached
-        ? `<button class="btn-publish" onclick="publishToKatalog(${e.id})" title="Publikasikan ke katalog">Publik</button>`
-        : '';
       return `
         <div class="entry-card">
           <div class="entry-vol">${e.vol}<em>ml</em></div>
@@ -1163,7 +981,6 @@
             ${e.catatan ? `<div class="entry-catatan">${e.catatan}</div>` : ''}
           </div>
           <div class="entry-actions">
-            ${pubBtn}
             <button class="btn-recall" onclick="recallEntry(${e.id})">Pakai</button>
             <button class="btn-del" onclick="deleteEntry(${e.id})" title="Hapus">×</button>
           </div>
@@ -1181,7 +998,7 @@
 
     function deleteEntry(id) {
       if (!canWrite()) { openOwnerModal(); return; }
-      openDelModal(id, 'entry');
+      openDelModal(id);
     }
 
     async function doDeleteEntry(id) {

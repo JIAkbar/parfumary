@@ -9,18 +9,17 @@
  *     lihat unlockOwner()/isOwnerUnlocked()
  *
  * Tier akses:
- *   Tamu        → pakai kalkulator, lihat katalog & racikan siapapun yang
- *                 kodenya diketahui (baca saja)
+ *   Tamu        → pakai kalkulator, lihat racikan siapapun yang kodenya
+ *                 diketahui (baca saja)
  *   User (kode) → + simpan/hapus racikan pribadi miliknya sendiri
  *   Owner       → kode akun OWNER_KODE ("JIA99") + Mode Owner aktif →
- *                 bisa simpan/hapus racikan OWNER_KODE + kelola Katalog
+ *                 bisa simpan/hapus racikan OWNER_KODE
  */
 
 const KODE_KEY      = 'parfumary-kode';
 const OWNER_KODE    = 'JIA99';                 // kode akun yang datanya dilindungi
 const OWNER_PW_KEY  = 'parfumary-owner-pw';    // cache password Owner (session, per tab)
 const API_RIWAYAT   = '/api/riwayat';
-const API_KATALOG   = '/api/katalog';
 const API_VERIFY_OWNER = '/api/verify-owner';
 
 /* ── Kode Akun ───────────────────────────────── */
@@ -143,47 +142,6 @@ async function rwDelete(id) {
     return writeResult(true, res.status);
   } catch (e) {
     console.error('[Parfumary] rwDelete gagal (network):', e.message);
-    return writeResult(false, 0);
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   KATALOG PUBLIK (owner-managed)
-══════════════════════════════════════════════ */
-
-async function katalogLoad() {
-  try {
-    const res = await fetch(API_KATALOG);
-    if (!res.ok) throw new Error();
-    return await res.json();
-  } catch { return []; }
-}
-
-async function katalogSave(entry) {
-  try {
-    const res = await fetch(API_KATALOG, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Owner-Key': getOwnerPassword() },
-      body: JSON.stringify(entry),
-    });
-    if (!res.ok) { console.error('[Parfumary] katalogSave gagal: HTTP', res.status); return writeResult(false, res.status); }
-    return writeResult(true, res.status);
-  } catch (e) {
-    console.error('[Parfumary] katalogSave gagal (network):', e.message);
-    return writeResult(false, 0);
-  }
-}
-
-async function katalogDelete(id) {
-  try {
-    const res = await fetch(`${API_KATALOG}?id=${id}`, {
-      method: 'DELETE',
-      headers: { 'X-Owner-Key': getOwnerPassword() },
-    });
-    if (!res.ok) { console.error('[Parfumary] katalogDelete gagal: HTTP', res.status); return writeResult(false, res.status); }
-    return writeResult(true, res.status);
-  } catch (e) {
-    console.error('[Parfumary] katalogDelete gagal (network):', e.message);
     return writeResult(false, 0);
   }
 }

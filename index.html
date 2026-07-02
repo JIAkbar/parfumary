@@ -1809,20 +1809,16 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    let pendingDeleteId = null;
-
     function openDelModal(id) {
       if (!canWrite()) { openOwnerModal(); return; }
-      pendingDeleteId = id;
       document.getElementById('delOverlay').classList.add('open');
       document.getElementById('delConfirmBtn').onclick = async () => {
         closeDelModal();
-        await deleteRiwayat(pendingDeleteId);
+        await deleteRiwayat(id);
       };
     }
     function closeDelModal() {
       document.getElementById('delOverlay').classList.remove('open');
-      pendingDeleteId = null;
     }
 
     async function deleteRiwayat(id) {
