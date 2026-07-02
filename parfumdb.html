@@ -609,6 +609,18 @@
     </div>
   </div>
 
+  <!-- ── Modal pesan generik (pengganti alert/confirm bawaan browser) ── -->
+  <div class="kode-modal-overlay" id="msgOverlay">
+    <div class="kode-modal">
+      <div class="kode-modal-title" id="msgTitle">Pemberitahuan</div>
+      <div class="kode-modal-desc" id="msgDesc"></div>
+      <div class="kode-modal-actions">
+        <button class="btn-ghost" id="msgOkBtn">OK</button>
+        <button class="btn-ghost" id="msgCancelBtn" style="display:none">Batal</button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
 
     <!-- ── Header ── -->
@@ -848,10 +860,32 @@
         : 'Parfumary';
     }
 
+    /* ── Modal pesan generik (pengganti alert/confirm) ── */
+    function showModal({ title = 'Pemberitahuan', desc, okText = 'OK', showCancel = false }) {
+      return new Promise(resolve => {
+        document.getElementById('msgTitle').textContent = title;
+        document.getElementById('msgDesc').textContent = desc;
+        const okBtn = document.getElementById('msgOkBtn');
+        const cancelBtn = document.getElementById('msgCancelBtn');
+        okBtn.textContent = okText;
+        cancelBtn.style.display = showCancel ? '' : 'none';
+        function close() { document.getElementById('msgOverlay').classList.remove('open'); }
+        okBtn.onclick = () => { close(); resolve(true); };
+        cancelBtn.onclick = () => { close(); resolve(false); };
+        document.getElementById('msgOverlay').classList.add('open');
+      });
+    }
+    function showAlert(desc, title = 'Pemberitahuan') {
+      return showModal({ title, desc, okText: 'OK', showCancel: false });
+    }
+    function showConfirm(desc, title = 'Konfirmasi') {
+      return showModal({ title, desc, okText: 'Ya', showCancel: true });
+    }
+
     /* ── Mode Owner modal ── */
-    function openOwnerModal() {
+    async function openOwnerModal() {
       if (isOwnerUnlocked()) {
-        if (confirm('Keluar dari Mode Owner? Racikan jadi lihat-saja lagi.')) {
+        if (await showConfirm('Keluar dari Mode Owner? Racikan jadi lihat-saja lagi.', 'Mode Owner')) {
           lockOwner();
           isOwnerCached = false;
           updateOwnerUI();
@@ -997,7 +1031,7 @@
 
     async function doDeleteKatalog(id) {
       const ok = await katalogDelete(id);
-      if (!ok) alert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.');
+      if (!ok) await showAlert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.', 'Gagal Menghapus');
       katalogCache = await katalogLoad(); // refresh cache
       renderKatalog();
     }
@@ -1009,7 +1043,7 @@
       const catatan = prompt('Catatan untuk katalog (opsional):') ?? '';
       await katalogSave({ ...e, catatan });
       katalogCache = []; // clear cache
-      alert('✓ Resep dipublikasikan ke katalog!');
+      await showAlert('Resep berhasil dipublikasikan ke katalog!', 'Berhasil');
     }
 
     /* ── Resep saya (personal) ── */
@@ -1148,7 +1182,7 @@
 
     async function doDeleteEntry(id) {
       const ok = await rwDelete(id);
-      if (!ok) alert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.');
+      if (!ok) await showAlert('Gagal menghapus. Cek koneksi internet, lalu coba lagi.', 'Gagal Menghapus');
       await render();
     }
 
@@ -1182,7 +1216,7 @@
           const ids = new Set(existing.map(x => x.id));
           for (const entry of imported.filter(x => !ids.has(x.id))) await rwSave(entry);
           await render();
-        } catch { alert('File JSON tidak valid.'); }
+        } catch { await showAlert('File JSON tidak valid.', 'Import Gagal'); }
       };
       reader.readAsText(file);
     }
